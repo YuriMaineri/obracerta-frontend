@@ -1,0 +1,89 @@
+<div class="header">
+  <a routerLink="/customers" class="back">‹ Clientes</a>
+  <h1>{{ isEditing ? 'Editar cliente' : 'Novo cliente' }}</h1>
+</div>
+
+@if (error(); as message) {
+  <div class="alert-error" role="alert">{{ message }}</div>
+}
+
+<form class="card" [formGroup]="form" (ngSubmit)="save()">
+  <fieldset>
+    <legend>Identificação</legend>
+
+    <div class="person-type" role="radiogroup" aria-label="Tipo de pessoa">
+      <label><input type="radio" formControlName="personType" value="COMPANY" /> Pessoa jurídica</label>
+      <label><input type="radio" formControlName="personType" value="INDIVIDUAL" /> Pessoa física</label>
+    </div>
+
+    <div class="grid">
+      <label class="wide">
+        {{ form.controls.personType.value === 'COMPANY' ? 'Razão social' : 'Nome' }} *
+        <input formControlName="name" autocomplete="off" />
+        @if (form.controls.name.touched && form.controls.name.hasError('required')) {
+          <small class="field-error">Obrigatório.</small>
+        }
+      </label>
+
+      <label>
+        {{ form.controls.personType.value === 'COMPANY' ? 'CNPJ' : 'CPF' }}
+        <input
+          formControlName="taxId"
+          inputmode="numeric"
+          [placeholder]="form.controls.personType.value === 'COMPANY' ? '00.000.000/0000-00' : '000.000.000-00'"
+        />
+      </label>
+
+      <label>
+        A/C (pessoa de contato)
+        <input formControlName="contactPerson" placeholder="Ex.: Sra. Maris Gundlach" />
+      </label>
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>Contato</legend>
+    <div class="grid">
+      <label>
+        Telefone
+        <input formControlName="phone" type="tel" placeholder="(51) 99999-9999" />
+      </label>
+      <label>
+        E-mail
+        <input formControlName="email" type="email" />
+        @if (form.controls.email.touched && form.controls.email.hasError('email')) {
+          <small class="field-error">E-mail inválido.</small>
+        }
+      </label>
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>Endereço</legend>
+    <div class="grid">
+      <label class="wide">
+        Logradouro e número
+        <input formControlName="address" />
+      </label>
+      <label>
+        Bairro
+        <input formControlName="district" />
+      </label>
+      <label>
+        Cidade
+        <input formControlName="city" />
+      </label>
+      <label>
+        CEP
+        <input formControlName="postalCode" inputmode="numeric" placeholder="00000-000" />
+      </label>
+    </div>
+  </fieldset>
+
+  <div class="footer">
+    <a class="btn" routerLink="/customers">Cancelar</a>
+    <button class="btn primary" type="submit" [disabled]="saving()">
+      {{ saving() ? 'Salvando…' : 'Salvar' }}
+    </button>
+  </div>
+</form>

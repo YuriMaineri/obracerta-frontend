@@ -1,0 +1,74 @@
+<div class="header">
+  <div>
+    <h1>Clientes</h1>
+    @if (!loading()) {
+      <p class="subtitle">{{ totalElements() }} {{ totalElements() === 1 ? 'cliente ativo' : 'clientes ativos' }}</p>
+    }
+  </div>
+  <a class="btn primary" routerLink="/customers/new">+ Novo cliente</a>
+</div>
+
+<input
+  class="search"
+  type="search"
+  placeholder="Buscar pelo nome ou razão social…"
+  aria-label="Buscar cliente"
+  (input)="onSearch($any($event.target).value)"
+/>
+
+@if (error(); as message) {
+  <div class="alert-error" role="alert">{{ message }}</div>
+}
+
+<div class="card">
+  <table>
+    <thead>
+      <tr>
+        <th>Nome / razão social</th>
+        <th>CPF / CNPJ</th>
+        <th>Contato (A/C)</th>
+        <th>Telefone</th>
+        <th>Cidade</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (c of customers(); track c.id) {
+        <tr>
+          <td>
+            <a [routerLink]="['/customers', c.id]" class="name">{{ c.name }}</a>
+            <span class="tag">{{ c.personType === 'COMPANY' ? 'PJ' : 'PF' }}</span>
+          </td>
+          <td class="numeric">{{ formatTaxId(c.taxId) }}</td>
+          <td>{{ c.contactPerson }}</td>
+          <td>{{ c.phone }}</td>
+          <td>{{ c.city }}</td>
+          <td>
+            <div class="actions">
+              <a class="btn small" [routerLink]="['/customers', c.id]">Editar</a>
+              <button class="btn small danger" type="button" (click)="deactivate(c)">Inativar</button>
+            </div>
+          </td>
+        </tr>
+      } @empty {
+        <tr>
+          <td colspan="6" class="empty">
+            @if (loading()) {
+              Carregando…
+            } @else {
+              Nenhum cliente encontrado.
+            }
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>
+
+@if (totalPages() > 1) {
+  <div class="pagination">
+    <button class="btn small" type="button" [disabled]="page() === 0" (click)="goToPage(page() - 1)">‹ Anterior</button>
+    <span>Página {{ page() + 1 }} de {{ totalPages() }}</span>
+    <button class="btn small" type="button" [disabled]="page() + 1 >= totalPages()" (click)="goToPage(page() + 1)">Próxima ›</button>
+  </div>
+}

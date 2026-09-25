@@ -1,0 +1,46 @@
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  padding: 0 1.5rem;
+  height: 56px;
+  background: var(--color-primary);
+  color: #fff;
+
+  .brand {
+    font-weight: 700;
+    font-size: 1.15rem;
+    color: #fff;
+    text-decoration: none;
+    letter-spacing: 0.02em;
+  }
+
+  nav {
+    display: flex;
+    gap: 1.25rem;
+
+    a, .coming-soon {
+      color: rgba(255, 255, 255, 0.8);
+      text-decoration: none;
+      padding: 0.25rem 0;
+      border-bottom: 2px solid transparent;
+
+      &.active,
+      &:hover {
+        color: #fff;
+        border-bottom-color: var(--color-accent);
+      }
+    }
+
+    .coming-soon {
+      color: rgba(255, 255, 255, 0.4);
+      cursor: default;
+    }
+  }
+}
+
+.content {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
