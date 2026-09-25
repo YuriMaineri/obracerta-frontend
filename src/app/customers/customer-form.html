@@ -7,7 +7,7 @@
   <div class="alert-error" role="alert">{{ message }}</div>
 }
 
-<form class="card" [formGroup]="form" (ngSubmit)="save()">
+<form class="card" [formGroup]="form" (ngSubmit)="save()" novalidate>
   <fieldset>
     <legend>Identificação</legend>
 
@@ -18,25 +18,25 @@
 
     <div class="grid">
       <label class="wide">
-        {{ form.controls.personType.value === 'COMPANY' ? 'Razão social' : 'Nome' }} *
+        {{ isCompany ? 'Razão social' : 'Nome' }} *
         <input formControlName="name" autocomplete="off" />
-        @if (form.controls.name.touched && form.controls.name.hasError('required')) {
-          <small class="field-error">Obrigatório.</small>
-        }
+        @if (fieldError('name'); as msg) { <small class="field-error">{{ msg }}</small> }
       </label>
 
       <label>
-        {{ form.controls.personType.value === 'COMPANY' ? 'CNPJ' : 'CPF' }}
+        {{ isCompany ? 'CNPJ' : 'CPF' }}
         <input
           formControlName="taxId"
-          inputmode="numeric"
-          [placeholder]="form.controls.personType.value === 'COMPANY' ? '00.000.000/0000-00' : '000.000.000-00'"
+          [appMask]="isCompany ? 'cnpj' : 'cpf'"
+          [placeholder]="isCompany ? '00.000.000/0000-00' : '000.000.000-00'"
         />
+        @if (fieldError('taxId'); as msg) { <small class="field-error">{{ msg }}</small> }
       </label>
 
       <label>
         A/C (pessoa de contato)
         <input formControlName="contactPerson" placeholder="Ex.: Sra. Maris Gundlach" />
+        @if (fieldError('contactPerson'); as msg) { <small class="field-error">{{ msg }}</small> }
       </label>
     </div>
   </fieldset>
@@ -46,14 +46,13 @@
     <div class="grid">
       <label>
         Telefone
-        <input formControlName="phone" type="tel" placeholder="(51) 99999-9999" />
+        <input formControlName="phone" type="tel" [appMask]="'phone'" placeholder="(51) 99999-9999" />
+        @if (fieldError('phone'); as msg) { <small class="field-error">{{ msg }}</small> }
       </label>
       <label>
         E-mail
-        <input formControlName="email" type="email" />
-        @if (form.controls.email.touched && form.controls.email.hasError('email')) {
-          <small class="field-error">E-mail inválido.</small>
-        }
+        <input formControlName="email" type="email" autocomplete="off" placeholder="nome@empresa.com.br" />
+        @if (fieldError('email'); as msg) { <small class="field-error">{{ msg }}</small> }
       </label>
     </div>
   </fieldset>
@@ -64,18 +63,22 @@
       <label class="wide">
         Logradouro e número
         <input formControlName="address" />
+        @if (fieldError('address'); as msg) { <small class="field-error">{{ msg }}</small> }
       </label>
       <label>
         Bairro
         <input formControlName="district" />
+        @if (fieldError('district'); as msg) { <small class="field-error">{{ msg }}</small> }
       </label>
       <label>
         Cidade
         <input formControlName="city" />
+        @if (fieldError('city'); as msg) { <small class="field-error">{{ msg }}</small> }
       </label>
       <label>
         CEP
-        <input formControlName="postalCode" inputmode="numeric" placeholder="00000-000" />
+        <input formControlName="postalCode" [appMask]="'postalCode'" placeholder="00000-000" />
+        @if (fieldError('postalCode'); as msg) { <small class="field-error">{{ msg }}</small> }
       </label>
     </div>
   </fieldset>

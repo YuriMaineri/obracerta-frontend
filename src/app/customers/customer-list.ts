@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Subject, debounceTime, distinctUntilChanged, switchMap, tap, catchError, EMPTY, startWith } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { formatPhone } from '../shared/br-formats';
 import { Customer, formatTaxId } from './customer.model';
 import { CustomerService, errorMessage } from './customer.service';
 
@@ -21,6 +22,7 @@ export class CustomerList {
   protected readonly loading = signal(true);
   protected readonly error = signal<string | null>(null);
   protected readonly formatTaxId = formatTaxId;
+  protected readonly formatPhone = formatPhone;
 
   private query = '';
   private readonly reload$ = new Subject<void>();
