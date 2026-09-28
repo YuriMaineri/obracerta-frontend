@@ -1,0 +1,83 @@
+<div class="section-header">
+  <p class="hint">A conta padrão já vem escolhida em todo orçamento novo. Dá para trocar por orçamento.</p>
+  @if (!formOpen()) {
+    <button type="button" class="btn primary" (click)="openNew()">+ Nova conta</button>
+  }
+</div>
+
+@if (error(); as message) {
+  <div class="alert-error" role="alert">{{ message }}</div>
+}
+
+@if (formOpen()) {
+  <form class="card form-card editor" [formGroup]="form" (ngSubmit)="save()" novalidate>
+    <fieldset>
+      <legend>{{ editingId() ? 'Editar conta' : 'Nova conta' }}</legend>
+      <div class="grid">
+        <label>
+          Banco *
+          <input formControlName="bank" placeholder="Ex.: Banrisul" />
+          @if (fieldError('bank'); as msg) { <small class="field-error">{{ msg }}</small> }
+        </label>
+        <label>
+          Tipo de conta
+          <input formControlName="accountType" />
+        </label>
+        <label>
+          Agência
+          <input formControlName="branch" inputmode="numeric" />
+        </label>
+        <label>
+          Conta
+          <input formControlName="accountNumber" inputmode="numeric" />
+        </label>
+        <label>
+          Chave PIX
+          <input formControlName="pixKey" placeholder="CNPJ, e-mail, telefone ou chave aleatória" />
+        </label>
+        <label>
+          Titular
+          <input formControlName="holder" />
+        </label>
+        <label class="checkbox wide">
+          <input type="checkbox" formControlName="defaultAccount" /> Conta padrão dos orçamentos
+        </label>
+      </div>
+    </fieldset>
+    <div class="form-footer">
+      <button type="button" class="btn" (click)="cancel()">Cancelar</button>
+      <button type="submit" class="btn primary" [disabled]="saving()">{{ saving() ? 'Salvando…' : 'Salvar' }}</button>
+    </div>
+  </form>
+}
+
+<div class="list">
+  @for (a of accounts(); track a.id) {
+    <article class="card item">
+      <div class="item-body">
+        <div class="item-title">
+          <strong>{{ a.bank }}</strong>
+          @if (a.defaultAccount) { <span class="badge">Padrão</span> }
+        </div>
+        <div class="item-details">
+          <span>Agência {{ a.branch || '—' }}</span>
+          <span>Conta {{ a.accountNumber || '—' }}</span>
+          @if (a.accountType) { <span>{{ a.accountType }}</span> }
+        </div>
+        <div class="item-details muted">
+          <span>PIX: {{ a.pixKey || 'não informado' }}</span>
+          @if (a.holder) { <span>Titular: {{ a.holder }}</span> }
+        </div>
+      </div>
+      <div class="item-actions">
+        @if (!a.defaultAccount) {
+          <button type="button" class="btn small" (click)="makeDefault(a)">Tornar padrão</button>
+        }
+        <button type="button" class="btn small" (click)="edit(a)">Editar</button>
+        <button type="button" class="btn small danger" (click)="remove(a)">Remover</button>
+      </div>
+    </article>
+  } @empty {
+    <p class="empty">{{ loading() ? 'Carregando…' : 'Nenhuma conta cadastrada.' }}</p>
+  }
+</div>

@@ -1,4 +1,4 @@
-import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { Customer, CustomerRequest, Page } from './customer.model';
@@ -32,13 +32,4 @@ export class CustomerService {
   deactivate(id: number): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/${id}`);
   }
-}
-
-/** Extrai a mensagem do ProblemDetail devolvido pela API (campo "detail"). */
-export function errorMessage(error: unknown): string {
-  if (error instanceof HttpErrorResponse) {
-    if (error.status === 0) return 'Não foi possível falar com a API. Ela está rodando na porta 8080?';
-    return error.error?.detail ?? `Erro ${error.status} ao falar com a API.`;
-  }
-  return 'Erro inesperado.';
 }

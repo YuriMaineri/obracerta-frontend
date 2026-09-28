@@ -13,7 +13,8 @@ import {
   taxIdValidator,
 } from '../shared/validators';
 import { CustomerRequest, PersonType, formatTaxId } from './customer.model';
-import { CustomerService, errorMessage } from './customer.service';
+import { errorMessage } from '../shared/http-error';
+import { CustomerService } from './customer.service';
 
 type FieldName = 'name' | 'taxId' | 'contactPerson' | 'phone' | 'email' | 'address' | 'district' | 'city' | 'postalCode';
 

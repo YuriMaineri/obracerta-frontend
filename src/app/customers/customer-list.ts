@@ -4,7 +4,8 @@ import { Subject, debounceTime, distinctUntilChanged, switchMap, tap, catchError
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { formatPhone } from '../shared/br-formats';
 import { Customer, formatTaxId } from './customer.model';
-import { CustomerService, errorMessage } from './customer.service';
+import { errorMessage } from '../shared/http-error';
+import { CustomerService } from './customer.service';
 
 @Component({
   selector: 'app-customer-list',

@@ -1,0 +1,83 @@
+<p class="hint intro">
+  Textos reaproveitados em todo orçamento. As marcadas como <span class="badge">Padrão</span> já vêm selecionadas
+  no orçamento novo; as outras ficam disponíveis para marcar quando precisar.
+</p>
+
+@if (error(); as message) {
+  <div class="alert-error" role="alert">{{ message }}</div>
+}
+
+@if (loading() && clauses().length === 0) {
+  <p class="empty">Carregando…</p>
+}
+
+@for (section of sections(); track section.type) {
+  <section class="clause-section">
+    <div class="section-header">
+      <h2>{{ section.label }}</h2>
+      @if (formOpenFor() !== section.type) {
+        <button type="button" class="btn small" (click)="openNew(section.type)">+ Nova cláusula</button>
+      }
+    </div>
+
+    @if (formOpenFor() === section.type) {
+      <form class="card form-card editor" [formGroup]="form" (ngSubmit)="save()" novalidate>
+        <fieldset>
+          <legend>{{ editingId() ? 'Editar cláusula' : 'Nova cláusula' }}</legend>
+          <div class="grid">
+            <label>
+              Título *
+              <input formControlName="title" placeholder="Nome curto, só para você identificar" />
+              @if (fieldError('title'); as msg) { <small class="field-error">{{ msg }}</small> }
+            </label>
+            <label>
+              Seção
+              <select formControlName="type">
+                @for (option of sectionOptions; track option.type) {
+                  <option [value]="option.type">{{ option.label }}</option>
+                }
+              </select>
+            </label>
+            <label class="wide">
+              Texto na proposta *
+              <textarea formControlName="content" rows="3"></textarea>
+              @if (fieldError('content'); as msg) { <small class="field-error">{{ msg }}</small> }
+            </label>
+            <label>
+              Ordem na seção
+              <input type="number" min="0" formControlName="sortOrder" />
+              @if (fieldError('sortOrder'); as msg) { <small class="field-error">{{ msg }}</small> }
+            </label>
+            <label class="checkbox">
+              <input type="checkbox" formControlName="defaultClause" /> Já vem marcada em orçamento novo
+            </label>
+          </div>
+        </fieldset>
+        <div class="form-footer">
+          <button type="button" class="btn" (click)="cancel()">Cancelar</button>
+          <button type="submit" class="btn primary" [disabled]="saving()">{{ saving() ? 'Salvando…' : 'Salvar' }}</button>
+        </div>
+      </form>
+    }
+
+    <div class="list">
+      @for (c of section.items; track c.id) {
+        <article class="card item">
+          <div class="item-body">
+            <div class="item-title">
+              <strong>{{ c.title }}</strong>
+              @if (c.defaultClause) { <span class="badge">Padrão</span> }
+            </div>
+            <p class="item-content">{{ c.content }}</p>
+          </div>
+          <div class="item-actions">
+            <button type="button" class="btn small" (click)="edit(c)">Editar</button>
+            <button type="button" class="btn small danger" (click)="remove(c)">Remover</button>
+          </div>
+        </article>
+      } @empty {
+        @if (!loading()) { <p class="empty">Nenhuma cláusula nesta seção.</p> }
+      }
+    </div>
+  </section>
+}
