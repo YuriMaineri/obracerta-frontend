@@ -1,0 +1,78 @@
+<app-dialog [title]="title" (closed)="closed.emit()">
+  <form [formGroup]="form" (ngSubmit)="save()" novalidate class="dialog-form">
+    <div class="dialog-body">
+      @if (error(); as message) {
+        <div class="alert-error" role="alert">{{ message }}</div>
+      }
+
+      <div class="seg" role="radiogroup" aria-label="Tipo de pessoa" style="align-self: flex-start">
+        <button type="button" role="radio" [class.active]="isCompany" [attr.aria-checked]="isCompany"
+                (click)="setPersonType('COMPANY')">Pessoa jurídica</button>
+        <button type="button" role="radio" [class.active]="!isCompany" [attr.aria-checked]="!isCompany"
+                (click)="setPersonType('INDIVIDUAL')">Pessoa física</button>
+      </div>
+
+      <div class="form-grid">
+        <div class="field wide">
+          <label for="c-name">{{ isCompany ? 'Razão social' : 'Nome' }} *</label>
+          <input id="c-name" formControlName="name" autocomplete="off" />
+          @if (fieldError('name'); as msg) { <small class="field-error">{{ msg }}</small> }
+        </div>
+        <div class="field">
+          <label for="c-tax">{{ isCompany ? 'CNPJ' : 'CPF' }}</label>
+          <input id="c-tax" formControlName="taxId" [appMask]="isCompany ? 'cnpj' : 'cpf'"
+                 [placeholder]="isCompany ? '00.000.000/0000-00' : '000.000.000-00'" />
+          @if (fieldError('taxId'); as msg) { <small class="field-error">{{ msg }}</small> }
+        </div>
+        <div class="field">
+          <label for="c-contact">A/C (pessoa de contato)</label>
+          <input id="c-contact" formControlName="contactPerson" placeholder="Ex.: Sra. Maris Gundlach" />
+          @if (fieldError('contactPerson'); as msg) { <small class="field-error">{{ msg }}</small> }
+        </div>
+        <div class="field">
+          <label for="c-phone">Telefone</label>
+          <input id="c-phone" formControlName="phone" type="tel" [appMask]="'phone'" placeholder="(51) 99999-9999" />
+          @if (fieldError('phone'); as msg) { <small class="field-error">{{ msg }}</small> }
+        </div>
+        <div class="field">
+          <label for="c-email">E-mail</label>
+          <input id="c-email" formControlName="email" type="email" placeholder="nome@empresa.com.br" />
+          @if (fieldError('email'); as msg) { <small class="field-error">{{ msg }}</small> }
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 12px">
+        <div class="form-subtitle">Endereço da obra / cobrança</div>
+        <div class="form-grid address">
+          <div class="field wide">
+            <label for="c-address">Logradouro e número</label>
+            <input id="c-address" formControlName="address" />
+            @if (fieldError('address'); as msg) { <small class="field-error">{{ msg }}</small> }
+          </div>
+          <div class="field">
+            <label for="c-district">Bairro</label>
+            <input id="c-district" formControlName="district" />
+            @if (fieldError('district'); as msg) { <small class="field-error">{{ msg }}</small> }
+          </div>
+          <div class="field">
+            <label for="c-city">Cidade</label>
+            <input id="c-city" formControlName="city" />
+            @if (fieldError('city'); as msg) { <small class="field-error">{{ msg }}</small> }
+          </div>
+          <div class="field">
+            <label for="c-cep">CEP</label>
+            <input id="c-cep" formControlName="postalCode" [appMask]="'postalCode'" placeholder="00000-000" />
+            @if (fieldError('postalCode'); as msg) { <small class="field-error">{{ msg }}</small> }
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="dialog-footer">
+      <button type="button" class="btn btn-secondary" (click)="closed.emit()">Cancelar</button>
+      <button type="submit" class="btn btn-primary" appBlueprint [disabled]="saving()">
+        {{ saving() ? 'Salvando…' : 'Salvar cliente' }}
+      </button>
+    </div>
+  </form>
+</app-dialog>

@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Injectable, inject, signal } from '@angular/core';
+import { Observable, tap } from 'rxjs';
 import { BankAccount, BankAccountRequest, Clause, ClauseRequest, Company, CompanyRequest } from './company.model';
 
 @Injectable({ providedIn: 'root' })
@@ -8,12 +8,19 @@ export class CompanyService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = '/api/company';
 
+  /** Nome exibido na barra superior: nome fantasia ou, na falta dele, a razão social. */
+  readonly displayName = signal<string | null>(null);
+
+  refreshDisplayName(): void {
+    this.get().subscribe({ next: (c) => this.setDisplayName(c), error: () => this.displayName.set(null) });
+  }
+
   get(): Observable<Company> {
     return this.http.get<Company>(this.baseUrl);
   }
 
   update(request: CompanyRequest): Observable<Company> {
-    return this.http.put<Company>(this.baseUrl, request);
+    return this.http.put<Company>(this.baseUrl, request).pipe(tap((c) => this.setDisplayName(c)));
   }
 
   logoUrl(version: number): string {
@@ -56,5 +63,9 @@ export class CompanyService {
 
   deactivateClause(id: number): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/clauses/${id}`);
+  }
+
+  private setDisplayName(company: Company): void {
+    this.displayName.set(company.tradeName || company.legalName);
   }
 }

@@ -1,0 +1,105 @@
+.layout {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+}
+
+.index {
+  padding: 24px 0 24px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.index-title {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-neutral-700);
+  padding: 0 12px 8px;
+}
+
+.index-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+  color: var(--color-text);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+
+  &:hover:not(.selected) { background: var(--color-hover); }
+  &.selected { font-weight: 500; }
+  .count { margin-left: auto; font-size: 12px; color: var(--color-neutral-700); font-weight: 400; }
+}
+
+.index-note {
+  margin: 16px 12px 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--color-neutral-700);
+}
+
+.list {
+  overflow: auto;
+  padding: 24px 32px 32px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.section { display: flex; flex-direction: column; gap: 10px; }
+
+.section-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  .btn { margin-left: auto; }
+}
+
+.clause {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 4px 16px;
+  padding: 14px 16px;
+
+  & + & { border-top: 1px solid var(--color-divider-soft); }
+  &.selectable:hover:not(.selected) { background: var(--color-hover); }
+
+  .clause-title { font-weight: 500; font-size: 15px; }
+  .default { font-size: 12px; }
+  .clause-content {
+    grid-column: 1 / -1;
+    font-size: 13px;
+    color: var(--color-neutral-800);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.clause-form {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 24px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  textarea { min-height: 150px; }
+}
+
+.type-order {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 120px;
+  gap: 16px;
+}
+
+.saved-note { font-size: 13px; color: var(--color-accent-700); }

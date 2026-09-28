@@ -1,12 +1,11 @@
 <header class="topbar">
   <a class="brand" routerLink="/">ObraCerta</a>
-  <nav>
-    <a routerLink="/customers" routerLinkActive="active">Clientes</a>
-    <span class="coming-soon" title="Semana 3">Orçamentos</span>
-    <a routerLink="/company" routerLinkActive="active">Empresa</a>
-  </nav>
+  <a class="nav-item" routerLink="/customers" routerLinkActive="active">Clientes</a>
+  <span class="nav-item soon" title="Disponível na Semana 3">Orçamentos · em breve</span>
+  <a class="nav-item" routerLink="/company" routerLinkActive="active">Empresa</a>
+  @if (companyName(); as name) {
+    <span class="company-name">{{ name }}</span>
+  }
 </header>
 
-<main class="content">
-  <router-outlet />
-</main>
+<router-outlet />

@@ -1,104 +1,141 @@
-@if (error(); as message) {
-  <div class="alert-error" role="alert">{{ message }}</div>
-}
+<div class="page">
+  <section class="page-main">
+    <app-company-header />
 
-<section class="card logo-card">
-  <div class="logo-preview">
-    @if (hasLogo()) {
-      <img [src]="logoUrl()" alt="Logotipo da empresa" />
-    } @else {
-      <span>Sem logotipo</span>
-    }
-  </div>
-  <div class="logo-actions">
-    <strong>Logotipo</strong>
-    <p>Aparece no cabeçalho da proposta. PNG ou JPEG, até 1 MB.</p>
-    <div class="buttons">
-      <label class="btn small">
-        {{ hasLogo() ? 'Trocar imagem' : 'Enviar imagem' }}
-        <input type="file" accept="image/png,image/jpeg" hidden #logoInput (change)="onLogoSelected(logoInput)" />
-      </label>
-      @if (hasLogo()) {
-        <button type="button" class="btn small danger" (click)="removeLogo()">Remover</button>
+    <form id="company-form" class="sections" [formGroup]="form" (ngSubmit)="save()" novalidate>
+      @if (error(); as message) {
+        <div class="alert-error" role="alert" style="margin-top: 16px">{{ message }}</div>
+      }
+
+      <div class="section">
+        <h3>Identificação</h3>
+        <div class="form-grid">
+          <div class="field">
+            <label for="co-legal">Razão social *</label>
+            <input id="co-legal" formControlName="legalName" />
+            @if (fieldError('legalName'); as msg) { <small class="field-error">{{ msg }}</small> }
+          </div>
+          <div class="field">
+            <label for="co-trade">Nome fantasia</label>
+            <input id="co-trade" formControlName="tradeName" placeholder="Nome que aparece para o cliente" />
+            @if (fieldError('tradeName'); as msg) { <small class="field-error">{{ msg }}</small> }
+          </div>
+          <div class="field">
+            <label for="co-cnpj">CNPJ</label>
+            <input id="co-cnpj" formControlName="taxId" [appMask]="'cnpj'" placeholder="00.000.000/0000-00" />
+            @if (fieldError('taxId'); as msg) { <small class="field-error">{{ msg }}</small> }
+          </div>
+          <div class="field">
+            <label for="co-sign">Responsável (assina a proposta)</label>
+            <input id="co-sign" formControlName="signatoryName" />
+            @if (fieldError('signatoryName'); as msg) { <small class="field-error">{{ msg }}</small> }
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h3>Contato</h3>
+        <div class="form-grid">
+          <div class="field">
+            <label for="co-phone">Telefone</label>
+            <input id="co-phone" formControlName="phone" type="tel" [appMask]="'phone'" placeholder="(51) 99999-9999" />
+            @if (fieldError('phone'); as msg) { <small class="field-error">{{ msg }}</small> }
+          </div>
+          <div class="field">
+            <label for="co-email">E-mail</label>
+            <input id="co-email" formControlName="email" type="email" placeholder="nome@empresa.com.br"
+                   [class.needs-attention]="isEmpty('email')" />
+            @if (fieldError('email'); as msg) { <small class="field-error">{{ msg }}</small> }
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h3>Endereço</h3>
+        <div class="form-grid address">
+          <div class="field wide">
+            <label for="co-address">Logradouro e número</label>
+            <input id="co-address" formControlName="address" [class.needs-attention]="isEmpty('address')" />
+            @if (fieldError('address'); as msg) { <small class="field-error">{{ msg }}</small> }
+          </div>
+          <div class="field">
+            <label for="co-district">Bairro</label>
+            <input id="co-district" formControlName="district" />
+            @if (fieldError('district'); as msg) { <small class="field-error">{{ msg }}</small> }
+          </div>
+          <div class="field">
+            <label for="co-city">Cidade</label>
+            <input id="co-city" formControlName="city" />
+            @if (fieldError('city'); as msg) { <small class="field-error">{{ msg }}</small> }
+          </div>
+          <div class="field">
+            <label for="co-cep">CEP</label>
+            <input id="co-cep" formControlName="postalCode" [appMask]="'postalCode'" placeholder="00000-000" />
+            @if (fieldError('postalCode'); as msg) { <small class="field-error">{{ msg }}</small> }
+          </div>
+        </div>
+      </div>
+    </form>
+
+    <div class="save-bar">
+      <span class="muted">{{ saved() && form.pristine ? 'Dados salvos.' : statusLabel() }}</span>
+      <button type="submit" form="company-form" class="btn btn-primary" appBlueprint [disabled]="saving()">
+        {{ saving() ? 'Salvando…' : 'Salvar dados' }}
+      </button>
+    </div>
+  </section>
+
+  <aside class="aside">
+    <div class="aside-head">
+      <span class="kicker">Prévia na proposta</span>
+      <div class="title" style="font-size: 26px">Cabeçalho do orçamento</div>
+      <div class="subtitle" style="font-size: 13px">Atualiza enquanto você edita os campos.</div>
+    </div>
+
+    <div class="aside-body preview-body">
+      <div class="preview-card" appBlueprint>
+        <div class="preview-top">
+          <div class="logo-box">
+            @if (hasLogo()) {
+              <img #logo [src]="logoUrl()" alt="Logotipo da empresa" (load)="onLogoLoaded(logo)" />
+            } @else {
+              <span>Sem logotipo</span>
+            }
+          </div>
+          <div class="preview-name">
+            <span class="name">{{ preview().name }}</span>
+            <span class="muted">CNPJ {{ preview().taxId || 'não informado' }}</span>
+          </div>
+        </div>
+        <div class="preview-grid">
+          <span class="muted">Telefone</span><span [class.missing]="!preview().phone">{{ preview().phone || 'não informado' }}</span>
+          <span class="muted">E-mail</span><span [class.missing]="!preview().email">{{ preview().email || 'não informado' }}</span>
+          <span class="muted">Endereço</span>
+          <span [class.missing]="preview().addressIncomplete">{{ preview().address || 'não informado' }}</span>
+          <span class="muted">Assina</span><span [class.missing]="!preview().signatory">{{ preview().signatory || 'não informado' }}</span>
+        </div>
+      </div>
+
+      @if (missingMessage(); as message) {
+        <div class="notice"><app-icon name="info" /><span>{{ message }}</span></div>
       }
     </div>
-    @if (logoError(); as msg) { <small class="field-error">{{ msg }}</small> }
-  </div>
-</section>
 
-<form class="card form-card" [formGroup]="form" (ngSubmit)="save()" novalidate>
-  <fieldset>
-    <legend>Identificação</legend>
-    <div class="grid">
-      <label class="wide">
-        Razão social *
-        <input formControlName="legalName" />
-        @if (fieldError('legalName'); as msg) { <small class="field-error">{{ msg }}</small> }
-      </label>
-      <label class="wide">
-        Nome fantasia
-        <input formControlName="tradeName" placeholder="Nome que aparece para o cliente" />
-        @if (fieldError('tradeName'); as msg) { <small class="field-error">{{ msg }}</small> }
-      </label>
-      <label>
-        CNPJ
-        <input formControlName="taxId" [appMask]="'cnpj'" placeholder="00.000.000/0000-00" />
-        @if (fieldError('taxId'); as msg) { <small class="field-error">{{ msg }}</small> }
-      </label>
-      <label>
-        Responsável (assina a proposta)
-        <input formControlName="signatoryName" />
-        @if (fieldError('signatoryName'); as msg) { <small class="field-error">{{ msg }}</small> }
-      </label>
+    <div class="logo-footer">
+      <div class="logo-title">
+        <span class="box-title">Logotipo</span>
+        <span class="muted">PNG ou JPEG, até 1 MB{{ logoSize() ? ' · atual ' + logoSize() : '' }}</span>
+      </div>
+      <div class="logo-actions">
+        <label class="btn btn-secondary btn-block">
+          <app-icon name="upload" />{{ hasLogo() ? 'Trocar imagem' : 'Enviar imagem' }}
+          <input type="file" accept="image/png,image/jpeg" hidden #logoInput (change)="onLogoSelected(logoInput)" />
+        </label>
+        @if (hasLogo()) {
+          <button type="button" class="btn btn-secondary" style="padding: 0 14px" (click)="removeLogo()">Remover</button>
+        }
+      </div>
+      @if (logoError(); as msg) { <small class="field-error">{{ msg }}</small> }
     </div>
-  </fieldset>
-
-  <fieldset>
-    <legend>Contato</legend>
-    <div class="grid">
-      <label>
-        Telefone
-        <input formControlName="phone" type="tel" [appMask]="'phone'" placeholder="(51) 99999-9999" />
-        @if (fieldError('phone'); as msg) { <small class="field-error">{{ msg }}</small> }
-      </label>
-      <label>
-        E-mail
-        <input formControlName="email" type="email" placeholder="nome@empresa.com.br" />
-        @if (fieldError('email'); as msg) { <small class="field-error">{{ msg }}</small> }
-      </label>
-    </div>
-  </fieldset>
-
-  <fieldset>
-    <legend>Endereço</legend>
-    <div class="grid">
-      <label class="wide">
-        Logradouro e número
-        <input formControlName="address" />
-        @if (fieldError('address'); as msg) { <small class="field-error">{{ msg }}</small> }
-      </label>
-      <label>
-        Bairro
-        <input formControlName="district" />
-        @if (fieldError('district'); as msg) { <small class="field-error">{{ msg }}</small> }
-      </label>
-      <label>
-        Cidade
-        <input formControlName="city" />
-        @if (fieldError('city'); as msg) { <small class="field-error">{{ msg }}</small> }
-      </label>
-      <label>
-        CEP
-        <input formControlName="postalCode" [appMask]="'postalCode'" placeholder="00000-000" />
-        @if (fieldError('postalCode'); as msg) { <small class="field-error">{{ msg }}</small> }
-      </label>
-    </div>
-  </fieldset>
-
-  <div class="form-footer">
-    @if (saved() && form.pristine) { <span class="saved">Dados salvos.</span> }
-    <button class="btn primary" type="submit" [disabled]="saving()">
-      {{ saving() ? 'Salvando…' : 'Salvar' }}
-    </button>
-  </div>
-</form>
+  </aside>
+</div>

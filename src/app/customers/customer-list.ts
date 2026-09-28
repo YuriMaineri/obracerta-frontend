@@ -1,15 +1,19 @@
-import { Component, inject, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
-import { Subject, debounceTime, distinctUntilChanged, switchMap, tap, catchError, EMPTY, startWith } from 'rxjs';
+import { Component, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { formatPhone } from '../shared/br-formats';
-import { Customer, formatTaxId } from './customer.model';
+import { EMPTY, Subject, catchError, debounceTime, distinctUntilChanged, startWith, switchMap, tap } from 'rxjs';
+import { BlueprintDirective } from '../shared/blueprint.directive';
+import { formatPhone, formatPostalCode } from '../shared/br-formats';
 import { errorMessage } from '../shared/http-error';
+import { Icon } from '../shared/icon';
+import { Customer, PersonType, formatTaxId } from './customer.model';
+import { CustomerDialog } from './customer-dialog';
 import { CustomerService } from './customer.service';
+
+type TypeFilter = 'ALL' | PersonType;
 
 @Component({
   selector: 'app-customer-list',
-  imports: [RouterLink],
+  imports: [BlueprintDirective, Icon, CustomerDialog],
   templateUrl: './customer-list.html',
   styleUrl: './customer-list.scss',
 })
@@ -22,21 +26,29 @@ export class CustomerList {
   protected readonly totalPages = signal(0);
   protected readonly loading = signal(true);
   protected readonly error = signal<string | null>(null);
+  protected readonly typeFilter = signal<TypeFilter>('ALL');
+  protected readonly selectedId = signal<number | null>(null);
+  protected readonly dialog = signal<{ customer: Customer | null } | null>(null);
+
+  protected readonly selected = computed(
+    () => this.customers().find((c) => c.id === this.selectedId()) ?? this.customers()[0] ?? null,
+  );
+
   protected readonly formatTaxId = formatTaxId;
   protected readonly formatPhone = formatPhone;
+  protected readonly formatPostalCode = formatPostalCode;
 
   private query = '';
+  private keepSelection: number | null = null;
   private readonly reload$ = new Subject<void>();
   private readonly typing$ = new Subject<string>();
 
   constructor() {
-    this.typing$
-      .pipe(debounceTime(300), distinctUntilChanged(), takeUntilDestroyed())
-      .subscribe((term) => {
-        this.query = term;
-        this.page.set(0);
-        this.reload$.next();
-      });
+    this.typing$.pipe(debounceTime(300), distinctUntilChanged(), takeUntilDestroyed()).subscribe((term) => {
+      this.query = term;
+      this.page.set(0);
+      this.reload$.next();
+    });
 
     this.reload$
       .pipe(
@@ -45,15 +57,16 @@ export class CustomerList {
           this.loading.set(true);
           this.error.set(null);
         }),
-        switchMap(() =>
-          this.service.search(this.query, this.page()).pipe(
+        switchMap(() => {
+          const type = this.typeFilter();
+          return this.service.search(this.query, type === 'ALL' ? null : type, this.page()).pipe(
             catchError((e) => {
               this.error.set(errorMessage(e));
               this.loading.set(false);
               return EMPTY;
             }),
-          ),
-        ),
+          );
+        }),
         takeUntilDestroyed(),
       )
       .subscribe((result) => {
@@ -61,15 +74,49 @@ export class CustomerList {
         this.totalElements.set(result.page.totalElements);
         this.totalPages.set(result.page.totalPages);
         this.loading.set(false);
+        const keep = this.keepSelection;
+        this.keepSelection = null;
+        const stillThere = result.content.some((c) => c.id === (keep ?? this.selectedId()));
+        this.selectedId.set(stillThere ? (keep ?? this.selectedId()) : (result.content[0]?.id ?? null));
       });
+  }
+
+  protected totalLabel(): string {
+    const n = this.totalElements();
+    return `${n} ${n === 1 ? 'cliente ativo' : 'clientes ativos'}`;
   }
 
   protected onSearch(term: string): void {
     this.typing$.next(term.trim());
   }
 
+  protected setTypeFilter(type: TypeFilter): void {
+    if (this.typeFilter() === type) return;
+    this.typeFilter.set(type);
+    this.page.set(0);
+    this.reload$.next();
+  }
+
   protected goToPage(page: number): void {
     this.page.set(page);
+    this.reload$.next();
+  }
+
+  protected select(customer: Customer): void {
+    this.selectedId.set(customer.id);
+  }
+
+  protected openCreate(): void {
+    this.dialog.set({ customer: null });
+  }
+
+  protected openEdit(customer: Customer): void {
+    this.dialog.set({ customer });
+  }
+
+  protected onSaved(customer: Customer): void {
+    this.dialog.set(null);
+    this.keepSelection = customer.id;
     this.reload$.next();
   }
 
@@ -79,5 +126,14 @@ export class CustomerList {
       next: () => this.reload$.next(),
       error: (e) => this.error.set(errorMessage(e)),
     });
+  }
+
+  protected personLabel(c: Customer): string {
+    return c.personType === 'COMPANY' ? 'PJ' : 'PF';
+  }
+
+  protected addressLine(c: Customer): string {
+    const cep = c.postalCode ? `CEP ${formatPostalCode(c.postalCode)}` : null;
+    return [c.district, c.city, cep].filter(Boolean).join(' · ');
   }
 }

@@ -1,3 +1,5 @@
+import { formatCnpj, formatCpf, onlyDigits } from '../shared/br-formats';
+
 export interface Company {
   id: number;
   legalName: string;
@@ -56,4 +58,30 @@ export function groupClauses(clauses: Clause[]): { type: ClauseType; label: stri
       .filter((c) => c.type === section.type)
       .sort((a, b) => a.sortOrder - b.sortOrder || a.title.localeCompare(b.title)),
   }));
+}
+
+/** Chave PIX legível: CNPJ e CPF saem formatados e com o tipo na frente. */
+export function formatPixKey(pixKey: string | null): string | null {
+  if (!pixKey) return null;
+  const digits = onlyDigits(pixKey);
+  if (digits.length === pixKey.replace(/[\s./-]/g, '').length) {
+    if (digits.length === 14) return `CNPJ ${formatCnpj(digits)}`;
+    if (digits.length === 11) return `CPF ${formatCpf(digits)}`;
+  }
+  return pixKey;
+}
+
+/** Linha de pagamento como sai na proposta. */
+export function proposalLine(account: BankAccount): string {
+  const accountLabel = /corrente/i.test(account.accountType ?? '') ? 'C/C' : 'Conta';
+  const pix = formatPixKey(account.pixKey);
+  return [
+    account.bank,
+    account.branch && `Ag. ${account.branch}`,
+    account.accountNumber && `${accountLabel} ${account.accountNumber}`,
+    pix && `PIX ${pix}`,
+    account.holder && `Titular: ${account.holder}`,
+  ]
+    .filter(Boolean)
+    .join(' · ');
 }

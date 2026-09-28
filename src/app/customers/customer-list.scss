@@ -1,59 +1,56 @@
-.header {
+.filters {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  margin-bottom: 1rem;
-
-  .subtitle { margin: 0.25rem 0 0; color: var(--color-muted); }
+  gap: 12px;
+  margin-bottom: 16px;
 }
 
-.search { margin-bottom: 1rem; max-width: 420px; }
+.search {
+  position: relative;
+  flex: 1;
 
-.card { overflow-x: auto; }
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-
-  th, td {
-    text-align: left;
-    padding: 0.65rem 0.9rem;
-    border-bottom: 1px solid var(--color-border);
-    white-space: nowrap;
-  }
-
-  th {
-    font-size: 0.8rem;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    color: var(--color-muted);
-    font-weight: 600;
-  }
-
-  tbody tr:last-child td { border-bottom: none; }
-  tbody tr:hover { background: #fafbfc; }
+  app-icon { position: absolute; left: 10px; top: 10px; color: var(--color-neutral-600); }
+  input { padding-left: 34px; }
 }
 
-.name { color: var(--color-text); font-weight: 500; text-decoration: none; &:hover { text-decoration: underline; } }
-
-.tag {
-  margin-left: 0.5rem;
-  font-size: 0.7rem;
-  padding: 0.1rem 0.4rem;
-  border-radius: 4px;
-  background: var(--color-background);
-  color: var(--color-muted);
+.table-frame {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
-.numeric { font-variant-numeric: tabular-nums; }
-.actions { display: flex; gap: 0.4rem; justify-content: flex-end; }
-.empty { text-align: center; color: var(--color-muted); padding: 2rem; }
+.table-scroll { flex: 1; min-height: 0; overflow: auto; }
+
+.customer-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  .name { font-weight: 500; }
+  .meta { font-size: 12px; color: var(--color-neutral-700); }
+}
 
 .pagination {
   display: flex;
-  justify-content: center;
   align-items: center;
-  gap: 1rem;
-  margin-top: 1rem;
-  color: var(--color-muted);
+  justify-content: center;
+  gap: 16px;
+  padding: 12px;
+  border-top: 1px solid var(--color-divider);
+  font-size: 13px;
+
+  .btn { height: 32px; }
+}
+
+.info-row {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  gap: 12px;
+
+  app-icon { color: var(--color-accent); }
+
+  > div { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .label { font-size: 12px; color: var(--color-neutral-700); }
+  .value { font-size: 15px; overflow-wrap: anywhere; }
+  .value-secondary { font-size: 14px; color: var(--color-neutral-800); }
 }
