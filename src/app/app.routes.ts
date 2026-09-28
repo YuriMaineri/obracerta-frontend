@@ -8,6 +8,21 @@ export const routes: Routes = [
     loadComponent: () => import('./customers/customer-list').then((m) => m.CustomerList),
   },
   {
+    path: 'estimates',
+    title: 'Orçamentos · ObraCerta',
+    loadComponent: () => import('./estimates/estimate-list').then((m) => m.EstimateList),
+  },
+  {
+    path: 'estimates/new',
+    title: 'Novo orçamento · ObraCerta',
+    loadComponent: () => import('./estimates/estimate-editor').then((m) => m.EstimateEditor),
+  },
+  {
+    path: 'estimates/:id',
+    title: 'Orçamento · ObraCerta',
+    loadComponent: () => import('./estimates/estimate-editor').then((m) => m.EstimateEditor),
+  },
+  {
     path: 'company',
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'details' },

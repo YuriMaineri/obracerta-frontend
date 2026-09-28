@@ -104,9 +104,21 @@
           </div>
         </div>
 
-        <div class="aside-box" appBlueprint>
+        <div class="aside-box history" appBlueprint>
           <div class="box-title">Orçamentos</div>
-          <div class="muted" style="font-size: 13px">O histórico de propostas deste cliente aparece aqui a partir da Semana 3.</div>
+          @for (h of history(); track h.id) {
+            <a class="history-item" [routerLink]="['/estimates', h.id]">
+              <span class="numeric">{{ h.number }}</span>
+              <span class="history-title">{{ h.title || formatDate(h.issueDate) }}</span>
+              <span class="status" [attr.data-status]="h.status">{{ statusLabel[h.status] }}</span>
+              <span class="numeric amount">{{ formatMoney(h.mainAmount) }}</span>
+            </a>
+          } @empty {
+            <div class="muted" style="font-size: 13px">Nenhum orçamento para este cliente ainda.</div>
+          }
+          @if (historyTotal() > history().length) {
+            <a class="muted more" routerLink="/estimates">Ver todos os {{ historyTotal() }} orçamentos</a>
+          }
         </div>
       </div>
 
@@ -114,7 +126,7 @@
         <button type="button" class="btn btn-primary btn-block" appBlueprint (click)="openEdit(c)">
           <app-icon name="pencil" />Editar
         </button>
-        <button type="button" class="btn btn-secondary btn-block" disabled title="Disponível na Semana 3">Novo orçamento</button>
+        <button type="button" class="btn btn-secondary btn-block" (click)="newEstimate(c)">Novo orçamento</button>
         <button type="button" class="btn btn-secondary" style="padding: 0 14px" (click)="deactivate(c)">Inativar</button>
       </div>
     } @else {

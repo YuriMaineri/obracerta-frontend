@@ -1,0 +1,99 @@
+<div class="page">
+  <section class="page-main padded">
+    <div class="page-title">
+      <h1>Orçamentos</h1>
+      @if (!loading() || totalElements() > 0) {
+        <span class="tag tag-accent">{{ totalLabel() }}</span>
+      }
+      <div class="actions">
+        <a class="btn btn-primary" appBlueprint routerLink="/estimates/new"><app-icon name="plus" />Novo orçamento</a>
+      </div>
+    </div>
+
+    <div class="filters">
+      <div class="search">
+        <app-icon name="search" />
+        <input type="search" placeholder="Buscar pelo número ou título…" aria-label="Buscar orçamento"
+               (input)="onSearch($any($event.target).value)" />
+      </div>
+      <div class="seg" role="radiogroup" aria-label="Status">
+        @for (option of statusOptions; track option.value) {
+          <button type="button" role="radio" [class.active]="statusFilter() === option.value"
+                  (click)="setStatusFilter(option.value)">{{ option.label }}</button>
+        }
+      </div>
+    </div>
+
+    @if (error(); as message) {
+      <div class="alert-error" role="alert">{{ message }}</div>
+    }
+
+    <div class="table-frame" appBlueprint>
+      <div class="table-scroll">
+        <table class="table">
+          <thead>
+            <tr><th>Número</th><th>Cliente</th><th>Emissão</th><th>Status</th><th class="right">Valor</th></tr>
+          </thead>
+          <tbody>
+            @for (e of estimates(); track e.id) {
+              <tr class="selectable" [class.selected]="e.id === selected()?.id" (click)="select(e)" (dblclick)="open(e)">
+                <td class="numeric">{{ e.number }}</td>
+                <td>
+                  <div class="two-lines">
+                    <span class="strong">{{ e.customerName }}</span>
+                    <span class="meta">{{ e.title || 'Sem título' }}</span>
+                  </div>
+                </td>
+                <td class="numeric">{{ formatDate(e.issueDate) }}</td>
+                <td><span class="status" [attr.data-status]="e.status">{{ statusLabel[e.status] }}</span></td>
+                <td class="numeric right">
+                  {{ formatMoney(e.mainAmount) }}
+                  @if (e.priceLineCount > 1) { <span class="meta"> +{{ e.priceLineCount - 1 }}</span> }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+        @if (estimates().length === 0) {
+          <div class="empty">{{ loading() ? 'Carregando…' : 'Nenhum orçamento encontrado.' }}</div>
+        }
+      </div>
+    </div>
+  </section>
+
+  <aside class="aside">
+    @if (selected(); as e) {
+      <div class="aside-head">
+        <div class="kicker-row">
+          <span class="kicker">Orçamento {{ e.number }}</span>
+          <span class="badge">{{ statusLabel[e.status] }}</span>
+        </div>
+        <div class="title">{{ e.customerName }}</div>
+        <div class="subtitle">{{ e.title || 'Sem título' }}</div>
+      </div>
+      <div class="aside-body">
+        <div class="aside-row detail"><span class="muted">Emissão</span><span class="numeric">{{ formatDate(e.issueDate) }}</span></div>
+        <div class="aside-row detail"><span class="muted">Prazo</span><span>{{ formatLeadTime(e.minLeadDays, e.maxLeadDays) }}</span></div>
+        <div class="aside-row detail">
+          <span class="muted">Valor principal</span>
+          <span class="numeric">{{ formatMoney(e.mainAmount) }}
+            @if (e.priceLineCount > 1) { <span class="muted"> · mais {{ e.priceLineCount - 1 }} valor(es)</span> }
+          </span>
+        </div>
+        <div class="aside-box" appBlueprint>
+          <span class="box-kicker">Proposta em PDF</span>
+          <span class="muted" style="font-size: 13px">A geração do documento para o cliente chega na Semana 4.</span>
+        </div>
+      </div>
+      <div class="aside-actions">
+        <button type="button" class="btn btn-primary btn-block" appBlueprint (click)="open(e)"><app-icon name="pencil" />Abrir</button>
+        <button type="button" class="btn btn-secondary btn-block" (click)="duplicate(e)">Duplicar</button>
+        @if (e.status === 'DRAFT') {
+          <button type="button" class="btn btn-secondary" style="padding: 0 14px" (click)="remove(e)">Excluir</button>
+        }
+      </div>
+    } @else {
+      <div class="aside-empty">{{ loading() ? 'Carregando…' : 'Crie o primeiro orçamento pelo botão "Novo orçamento".' }}</div>
+    }
+  </aside>
+</div>

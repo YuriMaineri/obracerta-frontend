@@ -414,3 +414,15 @@ input[type='checkbox'] { width: 16px; height: 16px; accent-color: var(--color-ac
 }
 
 .dialog-form { display: flex; flex-direction: column; min-height: 0; }
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+
+  &::before { content: ''; width: 8px; height: 8px; background: var(--color-neutral-600); }
+  &[data-status='SENT']::before { background: var(--color-accent); }
+  &[data-status='APPROVED']::before { background: #3f8a5a; }
+  &[data-status='REJECTED']::before { background: var(--color-error); }
+}

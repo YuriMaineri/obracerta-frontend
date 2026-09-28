@@ -1,4 +1,5 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { EMPTY, Subject, catchError, debounceTime, distinctUntilChanged, startWith, switchMap, tap } from 'rxjs';
 import { BlueprintDirective } from '../shared/blueprint.directive';
@@ -8,17 +9,27 @@ import { Icon } from '../shared/icon';
 import { Customer, PersonType, formatTaxId } from './customer.model';
 import { CustomerDialog } from './customer-dialog';
 import { CustomerService } from './customer.service';
+import { EstimateSummary, STATUS_LABELS, formatDate, formatMoney } from '../estimates/estimate.model';
+import { EstimateService } from '../estimates/estimate.service';
 
 type TypeFilter = 'ALL' | PersonType;
 
 @Component({
   selector: 'app-customer-list',
-  imports: [BlueprintDirective, Icon, CustomerDialog],
+  imports: [BlueprintDirective, Icon, CustomerDialog, RouterLink],
   templateUrl: './customer-list.html',
   styleUrl: './customer-list.scss',
 })
 export class CustomerList {
   private readonly service = inject(CustomerService);
+  private readonly estimateService = inject(EstimateService);
+  private readonly router = inject(Router);
+
+  protected readonly history = signal<EstimateSummary[]>([]);
+  protected readonly historyTotal = signal(0);
+  protected readonly statusLabel = STATUS_LABELS;
+  protected readonly formatDate = formatDate;
+  protected readonly formatMoney = formatMoney;
 
   protected readonly customers = signal<Customer[]>([]);
   protected readonly totalElements = signal(0);
@@ -44,6 +55,20 @@ export class CustomerList {
   private readonly typing$ = new Subject<string>();
 
   constructor() {
+    effect((onCleanup) => {
+      const id = this.selected()?.id;
+      this.history.set([]);
+      this.historyTotal.set(0);
+      if (!id) return;
+      const sub = this.estimateService.search({ customerId: id }, 0, 5).subscribe({
+        next: (page) => {
+          this.history.set(page.content);
+          this.historyTotal.set(page.page.totalElements);
+        },
+      });
+      onCleanup(() => sub.unsubscribe());
+    });
+
     this.typing$.pipe(debounceTime(300), distinctUntilChanged(), takeUntilDestroyed()).subscribe((term) => {
       this.query = term;
       this.page.set(0);
@@ -126,6 +151,10 @@ export class CustomerList {
       next: () => this.reload$.next(),
       error: (e) => this.error.set(errorMessage(e)),
     });
+  }
+
+  protected newEstimate(customer: Customer): void {
+    this.router.navigate(['/estimates/new'], { queryParams: { customerId: customer.id } });
   }
 
   protected personLabel(c: Customer): string {

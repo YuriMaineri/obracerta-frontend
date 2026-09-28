@@ -1,0 +1,289 @@
+<div class="page">
+  <section class="page-main">
+    <header class="editor-head">
+      <a routerLink="/estimates" class="back">‹ Orçamentos</a>
+      <div class="title-row">
+        <h1>{{ estimate() ? 'Orçamento ' + estimate()!.number : 'Novo orçamento' }}</h1>
+        @if (estimate(); as e) {
+          <span class="status" [attr.data-status]="e.status">{{ statusLabels[e.status] }}</span>
+        }
+      </div>
+    </header>
+
+    <form id="estimate-form" class="sections" [formGroup]="form" (ngSubmit)="save()" novalidate>
+      @if (error(); as message) {
+        <div class="alert-error" role="alert" style="margin-top: 16px">{{ message }}</div>
+      }
+
+      <div class="section">
+        <h3>Cliente e obra</h3>
+        <div class="form-grid">
+          <div class="field wide">
+            <label for="e-customer">Cliente *</label>
+            <select id="e-customer" formControlName="customerId">
+              <option [ngValue]="null" disabled>Escolha o cliente</option>
+              @for (c of customers(); track c.id) {
+                <option [ngValue]="c.id">{{ c.name }}</option>
+              }
+            </select>
+            @if (form.controls.customerId.touched && form.controls.customerId.invalid) {
+              <small class="field-error">Escolha o cliente.</small>
+            }
+          </div>
+          <div class="field wide">
+            <label for="e-title">Título (só para você identificar)</label>
+            <input id="e-title" formControlName="title" placeholder="Ex.: Porta do servidor e pintura" />
+          </div>
+          <div class="field">
+            <label for="e-date">Data de emissão</label>
+            <input id="e-date" type="date" formControlName="issueDate" />
+          </div>
+          <div class="field">
+            <label for="e-validity">Validade (dias)</label>
+            <input id="e-validity" type="number" min="0" formControlName="validityDays" placeholder="Opcional" />
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h3>Serviço a ser executado</h3>
+        <div class="lines" formArrayName="services">
+          @for (g of services.controls; track g; let i = $index) {
+            <div class="line-block" [formGroupName]="i">
+              <div class="line">
+                <span class="bullet">•</span>
+                <textarea formControlName="description" rows="1" class="auto" placeholder="Descreva o serviço"></textarea>
+                <button type="button" class="btn btn-ghost" [class.on]="g.value.showNote" (click)="toggleNote(g)"
+                        title="Recado só para você; não vai para o cliente">Nota interna</button>
+                <button type="button" class="btn btn-icon icon-only" aria-label="Remover serviço" (click)="remove(services, i)">
+                  <app-icon name="x" />
+                </button>
+              </div>
+              @if (g.value.showNote) {
+                <div class="internal-note">
+                  <span class="internal-tag">Só para você</span>
+                  <input formControlName="internalNote" placeholder="Ex.: ver com o gesseiro" />
+                </div>
+              }
+            </div>
+          }
+          <button type="button" class="btn btn-ghost add" (click)="addService(); focusLast('textarea[formcontrolname=description]')"><app-icon name="plus" [size]="14" />Adicionar serviço</button>
+        </div>
+      </div>
+
+      <div class="section">
+        <h3>Material a ser usado</h3>
+        <div class="stack">
+          <div class="seg" role="radiogroup" aria-label="Regime de material">
+            @for (o of supplyOptions; track o.value) {
+              <button type="button" role="radio" [class.active]="form.controls.materialSupply.value === o.value"
+                      (click)="setSupply(o.value)">{{ o.label }}</button>
+            }
+          </div>
+          <p class="muted hint">{{ supplyHint() }}</p>
+
+          @if (form.controls.materialSupply.value === 'ESTIMATED') {
+            <div class="field narrow">
+              <label for="e-est">Valor aproximado do material (R$)</label>
+              <input id="e-est" type="number" min="0" step="0.01" formControlName="estimatedMaterialCost" />
+            </div>
+          }
+
+          <div class="lines" formArrayName="materials">
+            @if (materials.length) {
+              <div class="line header-line"><span></span><span>Material</span><span>Qtd.</span><span>Preço (R$)</span><span></span></div>
+            }
+            @for (g of materials.controls; track g; let i = $index) {
+              <div class="line material" [formGroupName]="i">
+                <span class="bullet">•</span>
+                <input formControlName="description" placeholder="Ex.: 4 luminárias 24w 6500k" />
+                <input type="number" min="0" step="any" formControlName="quantity" placeholder="—" />
+                <input type="number" min="0" step="0.01" formControlName="totalPrice" placeholder="—" />
+                <button type="button" class="btn btn-icon icon-only" aria-label="Remover material" (click)="remove(materials, i)">
+                  <app-icon name="x" />
+                </button>
+              </div>
+            }
+            <div class="lines-footer">
+              <button type="button" class="btn btn-ghost add" (click)="addMaterial(); focusLast('.line.material input[formcontrolname=description]')"><app-icon name="plus" [size]="14" />Adicionar material</button>
+              @if (form.controls.materialSupply.value === 'ITEMIZED' && materialTotal() > 0) {
+                <span class="total">Valor total de material <strong class="numeric">{{ formatMoney(materialTotal()) }}</strong></span>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h3>Valor da mão de obra e material</h3>
+        <div class="lines" formArrayName="priceLines">
+          @for (g of priceLines.controls; track g; let i = $index) {
+            <div class="line price" [formGroupName]="i">
+              <span class="bullet">•</span>
+              <input formControlName="description" placeholder="Ex.: Valor da mão de obra" />
+              <div class="money">
+                <span>R$</span>
+                <input type="number" min="0" step="0.01" formControlName="amount" placeholder="0,00" />
+              </div>
+              <button type="button" class="btn btn-icon icon-only" aria-label="Remover valor" (click)="remove(priceLines, i)">
+                <app-icon name="x" />
+              </button>
+            </div>
+            @if (g.get('amount')?.touched && g.get('amount')?.invalid) {
+              <small class="field-error indent">Informe o valor desta linha.</small>
+            }
+          }
+          <p class="muted hint">Pode ter mais de um valor: mão de obra, material, alternativas ("sem pintura das grades").</p>
+          <button type="button" class="btn btn-ghost add" (click)="addPriceLine(); focusLast('.line.price input[formcontrolname=description]')"><app-icon name="plus" [size]="14" />Adicionar valor</button>
+        </div>
+      </div>
+
+      <div class="section">
+        <h3>Tempo de execução</h3>
+        <div class="lead">
+          <input type="number" min="0" formControlName="minLeadDays" aria-label="Prazo mínimo" placeholder="mín." />
+          <span>a</span>
+          <input type="number" min="0" formControlName="maxLeadDays" aria-label="Prazo máximo" placeholder="máx." />
+          <span class="muted">dias úteis</span>
+        </div>
+      </div>
+
+      <div class="section">
+        <h3>Forma de pagamento</h3>
+        <div class="stack">
+          <div class="clause-list">
+            @for (c of sectionFor('PAYMENT').items; track c.id) {
+              <label class="checkbox clause-option">
+                <input type="checkbox" [checked]="isClauseSelected(c)" (change)="toggleClause(c)" />
+                <span>{{ c.content }}</span>
+              </label>
+            }
+          </div>
+          <div class="field">
+            <label for="e-payment">Condição específica desta obra</label>
+            <textarea id="e-payment" formControlName="paymentTerms" rows="2"
+                      placeholder="Ex.: 50% R$ 13.157,57 no dia 10/04/2026 e 50% no dia 10/05/2026"></textarea>
+          </div>
+          <div class="field narrow">
+            <label for="e-account">Conta para depósito e PIX</label>
+            <select id="e-account" formControlName="bankAccountId">
+              <option [ngValue]="null">Nenhuma</option>
+              @for (a of bankAccounts(); track a.id) {
+                <option [ngValue]="a.id">{{ a.bank }} · Ag. {{ a.branch }} · {{ a.accountNumber }}{{ a.defaultAccount ? ' (padrão)' : '' }}</option>
+              }
+            </select>
+          </div>
+        </div>
+      </div>
+
+      @for (type of ['WARRANTY', 'OBSERVATION', 'REGULATORY']; track type) {
+        <div class="section">
+          <h3>{{ sectionFor($any(type)).label }}</h3>
+          <div class="stack">
+            <div class="clause-list">
+              @for (c of sectionFor($any(type)).items; track c.id) {
+                <label class="checkbox clause-option">
+                  <input type="checkbox" [checked]="isClauseSelected(c)" (change)="toggleClause(c)" />
+                  <span>{{ c.content }}</span>
+                </label>
+              } @empty {
+                <span class="muted">Nenhuma cláusula cadastrada nesta seção.</span>
+              }
+            </div>
+            @if (type === 'OBSERVATION') {
+              <div class="lines" formArrayName="exclusions">
+                <span class="sub-label">Observações desta obra</span>
+                @for (c of exclusions.controls; track c; let i = $index) {
+                  <div class="line">
+                    <span class="bullet">•</span>
+                    <input class="exclusion-input" [formControlName]="i" placeholder="Ex.: Não incluso neste orçamento os ventiladores." />
+                    <button type="button" class="btn btn-icon icon-only" aria-label="Remover observação" (click)="remove(exclusions, i)">
+                      <app-icon name="x" />
+                    </button>
+                  </div>
+                }
+                <button type="button" class="btn btn-ghost add" (click)="addExclusion(); focusLast('.exclusion-input')"><app-icon name="plus" [size]="14" />Adicionar observação</button>
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </form>
+
+    <div class="save-bar">
+      <span class="muted">
+        @if (hasChanges) { Alterações não salvas } @else if (savedAt()) { Salvo às {{ savedAt() }} } @else if (!isNew) { Tudo salvo }
+      </span>
+      <button type="submit" form="estimate-form" class="btn btn-primary" appBlueprint [disabled]="saving() || loading()">
+        {{ saving() ? 'Salvando…' : 'Salvar orçamento' }}
+      </button>
+    </div>
+  </section>
+
+  <aside class="aside">
+    <div class="aside-head">
+      <div class="kicker-row">
+        <span class="kicker">Visão interna</span>
+        <span class="badge">Não vai para o cliente</span>
+      </div>
+      <div class="title">{{ summary().customer }}</div>
+      <div class="subtitle">{{ estimate()?.number ?? 'Novo orçamento' }}{{ form.controls.title.value ? ' · ' + form.controls.title.value : '' }}</div>
+    </div>
+
+    <div class="aside-body">
+      @if (estimate(); as e) {
+        <div class="aside-row status-row">
+          <span class="muted">Status</span>
+          <div class="seg">
+            @for (s of statuses; track s) {
+              <button type="button" [class.active]="e.status === s" (click)="changeStatus(s)">{{ statusLabels[s] }}</button>
+            }
+          </div>
+        </div>
+      }
+
+      <div class="aside-row detail">
+        <span class="muted">Valores</span>
+        <div class="prices">
+          @for (p of summary().prices; track $index) {
+            <div><span>{{ p.description }}</span><span class="numeric">{{ formatMoney(p.amount) }}</span></div>
+          } @empty {
+            <span class="missing">Nenhum valor informado</span>
+          }
+        </div>
+      </div>
+      <div class="aside-row detail"><span class="muted">Material</span><span>{{ summary().material }}</span></div>
+      <div class="aside-row detail"><span class="muted">Prazo</span><span>{{ summary().leadTime }}</span></div>
+      <div class="aside-row detail"><span class="muted">Conta</span><span>{{ summary().account }}</span></div>
+
+      <div class="aside-box notes" appBlueprint>
+        <span class="box-kicker">Notas internas</span>
+        @for (n of internalNotes.controls; track n; let i = $index) {
+          <div class="note">
+            <span>{{ n.value }}</span>
+            <button type="button" class="btn btn-icon icon-only" aria-label="Remover nota" (click)="remove(internalNotes, i)"><app-icon name="x" [size]="14" /></button>
+          </div>
+        }
+        @for (s of summary().serviceNotes; track $index) {
+          <div class="note from-service"><span><strong>{{ s.service }}:</strong> {{ s.note }}</span></div>
+        }
+        @if (internalNotes.length === 0 && summary().serviceNotes.length === 0) {
+          <span class="muted" style="font-size: 13px">Recados que hoje iriam em vermelho no documento ficam aqui.</span>
+        }
+        <div class="note-input">
+          <input [formControl]="noteDraft" placeholder="Nova nota interna" (keydown.enter)="$event.preventDefault(); addInternalNote()" />
+          <button type="button" class="btn btn-secondary" (click)="addInternalNote()">Adicionar</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="aside-actions">
+      <button type="submit" form="estimate-form" class="btn btn-primary btn-block" appBlueprint [disabled]="saving() || loading()">
+        {{ saving() ? 'Salvando…' : 'Salvar' }}
+      </button>
+      @if (!isNew) {
+        <button type="button" class="btn btn-secondary btn-block" (click)="duplicate()">Duplicar</button>
+      }
+    </div>
+  </aside>
+</div>

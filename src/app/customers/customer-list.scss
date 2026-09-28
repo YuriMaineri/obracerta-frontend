@@ -54,3 +54,23 @@
   .value { font-size: 15px; overflow-wrap: anywhere; }
   .value-secondary { font-size: 14px; color: var(--color-neutral-800); }
 }
+
+.history { gap: 4px; }
+
+.history-item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 0;
+  font-size: 13px;
+  color: var(--color-text);
+  text-decoration: none;
+  border-top: 1px solid var(--color-divider-soft);
+
+  &:hover { background: var(--color-hover); }
+  .history-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--color-neutral-700); }
+  .amount { text-align: right; }
+}
+
+.more { font-size: 12px; margin-top: 6px; }
