@@ -34,6 +34,10 @@ export class EstimateService {
     return this.http.put<EstimateDetails>(`${this.baseUrl}/${id}/status`, { status });
   }
 
+  proposalUrl(id: number, download = false): string {
+    return `${this.baseUrl}/${id}/proposal${download ? '?download=true' : ''}`;
+  }
+
   delete(id: number): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/${id}`);
   }

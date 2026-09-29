@@ -282,7 +282,9 @@
         {{ saving() ? 'Salvando…' : 'Salvar' }}
       </button>
       @if (!isNew) {
-        <button type="button" class="btn btn-secondary btn-block" (click)="duplicate()">Duplicar</button>
+        <button type="button" class="btn btn-secondary btn-block" (click)="openProposal()"
+                [title]="hasChanges ? 'Salva as alterações e abre o PDF' : 'Abre a proposta do cliente em PDF'">Ver PDF</button>
+        <button type="button" class="btn btn-secondary" style="padding: 0 14px" (click)="duplicate()">Duplicar</button>
       }
     </div>
   </aside>

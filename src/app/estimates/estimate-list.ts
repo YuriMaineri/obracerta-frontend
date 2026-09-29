@@ -101,6 +101,14 @@ export class EstimateList {
     this.router.navigate(['/estimates', estimate.id]);
   }
 
+  protected openProposal(estimate: EstimateSummary): void {
+    window.open(this.service.proposalUrl(estimate.id), '_blank');
+  }
+
+  protected proposalDownloadUrl(estimate: EstimateSummary): string {
+    return this.service.proposalUrl(estimate.id, true);
+  }
+
   protected duplicate(estimate: EstimateSummary): void {
     this.service.duplicate(estimate.id).subscribe({
       next: (copy) => this.router.navigate(['/estimates', copy.id]),

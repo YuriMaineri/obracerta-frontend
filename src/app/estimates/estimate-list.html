@@ -82,7 +82,11 @@
         </div>
         <div class="aside-box" appBlueprint>
           <span class="box-kicker">Proposta em PDF</span>
-          <span class="muted" style="font-size: 13px">A geração do documento para o cliente chega na Semana 4.</span>
+          <span class="muted" style="font-size: 13px">O documento do cliente, sem as notas internas.</span>
+          <div class="pdf-actions">
+            <button type="button" class="btn btn-secondary" (click)="openProposal(e)">Ver PDF</button>
+            <a class="btn btn-ghost" [href]="proposalDownloadUrl(e)">Baixar</a>
+          </div>
         </div>
       </div>
       <div class="aside-actions">

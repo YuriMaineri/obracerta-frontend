@@ -255,7 +255,21 @@ export class EstimateEditor implements OnInit {
     return this.supplyOptions.find((o) => o.value === this.values().materialSupply)?.hint ?? '';
   }
 
-  protected save(): void {
+  /** Abre a proposta; se houver alterações, salva antes para o PDF sair com a versão da tela. */
+  protected openProposal(): void {
+    const current = this.estimate();
+    if (!current) return;
+    if (!this.hasChanges) {
+      window.open(this.service.proposalUrl(current.id), '_blank');
+      return;
+    }
+    const tab = window.open('', '_blank');
+    this.save(() => {
+      if (tab) tab.location.href = this.service.proposalUrl(current.id);
+    }, () => tab?.close());
+  }
+
+  protected save(onSaved?: () => void, onFailed?: () => void): void {
     this.dropEmptyRows();
     const missingAmount = this.priceLines.controls.find((g) => g.value.description?.trim() && g.value.amount == null);
     if (missingAmount) {
@@ -265,6 +279,7 @@ export class EstimateEditor implements OnInit {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       this.error.set('Revise os campos destacados antes de salvar.');
+      onFailed?.();
       return;
     }
     const v = this.form.getRawValue();
@@ -297,10 +312,12 @@ export class EstimateEditor implements OnInit {
         this.savedAt.set(new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }));
         this.fill(saved);
         if (!current) this.router.navigate(['/estimates', saved.id], { replaceUrl: true });
+        onSaved?.();
       },
       error: (e) => {
         this.saving.set(false);
         this.error.set(errorMessage(e));
+        onFailed?.();
       },
     });
   }
