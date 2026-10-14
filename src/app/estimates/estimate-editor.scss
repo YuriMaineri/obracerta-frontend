@@ -35,7 +35,8 @@
 
   .bullet { padding-top: 7px; color: var(--color-accent); }
   &.material, &.header-line { grid-template-columns: 14px minmax(0, 1fr) 90px 130px 36px; }
-  &.price { grid-template-columns: 14px minmax(0, 1fr) 180px 36px; }
+  &.price { grid-template-columns: 14px minmax(0, 1fr) auto 180px 36px; }
+  .alternative { min-height: 36px; font-size: 13px; color: var(--color-neutral-700); white-space: nowrap; }
   &.header-line { font-size: 12px; color: rgba(29, 31, 32, 0.7); }
 }
 
@@ -112,6 +113,14 @@ textarea.auto { min-height: 36px; field-sizing: content; resize: none; }
   flex-direction: column;
   gap: 4px;
   div { display: flex; justify-content: space-between; gap: 12px; }
+  .alt { color: var(--color-neutral-700); }
+  .alt-tag {
+    margin-left: 6px;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-accent-700);
+  }
 }
 
 .notes { gap: 10px; }

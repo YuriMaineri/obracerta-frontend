@@ -106,7 +106,7 @@ export class EstimateEditor implements OnInit {
     const customer = this.customers().find((c) => c.id === v.customerId);
     return {
       customer: customer?.name ?? this.estimate()?.customer.name ?? 'Escolha o cliente',
-      prices: ((v.priceLines ?? []) as { description: string; amount: number | null }[]).filter((p) => p.description?.trim()),
+      prices: ((v.priceLines ?? []) as { description: string; amount: number | null; alternative: boolean }[]).filter((p) => p.description?.trim()),
       material,
       leadTime: formatLeadTime(v.minLeadDays ?? null, v.maxLeadDays ?? null),
       account: account ? `${account.bank} · Ag. ${account.branch ?? '—'}` : 'Nenhuma',
@@ -185,11 +185,14 @@ export class EstimateEditor implements OnInit {
     this.form.markAsDirty();
   }
 
-  protected addPriceLine(value: { description: string; amount: number | null } = { description: '', amount: null }): void {
+  protected addPriceLine(
+    value: { description: string; amount: number | null; alternative?: boolean } = { description: '', amount: null },
+  ): void {
     this.priceLines.push(
       this.fb.group({
         description: [value.description, Validators.maxLength(250)],
         amount: this.fb.control<number | null>(value.amount, Validators.min(0)),
+        alternative: this.fb.control(value.alternative ?? false),
       }),
     );
     this.form.markAsDirty();
@@ -298,7 +301,7 @@ export class EstimateEditor implements OnInit {
       clauseIds: [...this.selectedClauses()],
       services: v.services.map((s) => ({ description: s['description'].trim(), internalNote: text(s['internalNote']) })),
       materials: v.materials.map((m) => ({ description: m['description'].trim(), quantity: m['quantity'], totalPrice: m['totalPrice'] })),
-      priceLines: v.priceLines.map((p) => ({ description: p['description'].trim(), amount: p['amount'] })),
+      priceLines: v.priceLines.map((p) => ({ description: p['description'].trim(), amount: p['amount'], alternative: !!p['alternative'] })),
       exclusions: v.exclusions.map((x) => x.trim()),
       internalNotes: v.internalNotes.map((x) => x.trim()),
     };

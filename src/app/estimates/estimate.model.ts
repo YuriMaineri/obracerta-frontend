@@ -46,6 +46,7 @@ export interface MaterialLine {
 export interface PriceLine {
   description: string;
   amount: number;
+  alternative: boolean;
 }
 
 export interface EstimateDetails {

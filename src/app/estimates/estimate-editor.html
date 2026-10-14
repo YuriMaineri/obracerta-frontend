@@ -121,6 +121,9 @@
             <div class="line price" [formGroupName]="i">
               <span class="bullet">•</span>
               <input formControlName="description" placeholder="Ex.: Valor da mão de obra" />
+              <label class="checkbox alternative" title="Opção com serviços a menos: aparece no PDF, mas fica fora do total">
+                <input type="checkbox" formControlName="alternative" />Alternativa
+              </label>
               <div class="money">
                 <span>R$</span>
                 <input type="number" min="0" step="0.01" formControlName="amount" placeholder="0,00" />
@@ -133,7 +136,7 @@
               <small class="field-error indent">Informe o valor desta linha.</small>
             }
           }
-          <p class="muted hint">Pode ter mais de um valor: mão de obra, material, alternativas ("sem pintura das grades").</p>
+          <p class="muted hint">Pode ter mais de um valor: mão de obra, material e alternativas ("sem pintura das grades"). Marque as alternativas para elas ficarem fora do total.</p>
           <button type="button" class="btn btn-ghost add" (click)="addPriceLine(); focusLast('.line.price input[formcontrolname=description]')"><app-icon name="plus" [size]="14" />Adicionar valor</button>
         </div>
       </div>
@@ -246,7 +249,10 @@
         <span class="muted">Valores</span>
         <div class="prices">
           @for (p of summary().prices; track $index) {
-            <div><span>{{ p.description }}</span><span class="numeric">{{ formatMoney(p.amount) }}</span></div>
+            <div [class.alt]="p.alternative">
+              <span>{{ p.description }}@if (p.alternative) { <span class="alt-tag">alternativa</span> }</span>
+              <span class="numeric">{{ formatMoney(p.amount) }}</span>
+            </div>
           } @empty {
             <span class="missing">Nenhum valor informado</span>
           }
