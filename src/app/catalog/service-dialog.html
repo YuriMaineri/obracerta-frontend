@@ -1,0 +1,83 @@
+<app-dialog [title]="service() ? 'Editar serviço' : 'Novo serviço'" [width]="860" (closed)="closed.emit()">
+  <form [formGroup]="form" (ngSubmit)="save()" novalidate class="dialog-form">
+    <div class="dialog-body">
+      @if (error(); as message) {
+        <div class="alert-error" role="alert">{{ message }}</div>
+      }
+      <div class="form-grid">
+        <div class="field wide">
+          <label for="s-name">Serviço *</label>
+          <input id="s-name" formControlName="name" placeholder="Ex.: Pintura de parede interna, 2 demãos" />
+          @if (fieldError('name'); as msg) { <small class="field-error">{{ msg }}</small> }
+        </div>
+        <div class="field">
+          <label for="s-category">Categoria *</label>
+          <select id="s-category" formControlName="category">
+            @for (c of categories; track c) { <option [value]="c">{{ categoryLabel[c] }}</option> }
+          </select>
+        </div>
+        <div class="field">
+          <label for="s-unit">Cobrado por *</label>
+          <select id="s-unit" formControlName="unit">
+            @for (u of units; track u) { <option [value]="u">{{ symbols[u] }}</option> }
+          </select>
+        </div>
+        <div class="field">
+          @if (lumpSum()) {
+            <label for="s-prod">Diárias para o serviço todo</label>
+          } @else {
+            <label for="s-prod">Rendimento ({{ unitSymbol() }} por dia de um profissional)</label>
+          }
+          <input id="s-prod" type="number" min="0" step="0.1" formControlName="productivity" />
+          @if (fieldError('productivity'); as msg) { <small class="field-error">{{ msg }}</small> }
+        </div>
+        <div class="field">
+          <label for="s-usual">Preço que você costuma cobrar por {{ unitSymbol() }} (R$)</label>
+          <input id="s-usual" type="number" min="0" step="0.01" formControlName="usualPrice" placeholder="Opcional" />
+          @if (fieldError('usualPrice'); as msg) { <small class="field-error">{{ msg }}</small> }
+        </div>
+        <div class="field wide">
+          <label for="s-text">Texto na proposta</label>
+          <textarea id="s-text" rows="2" formControlName="proposalDescription" placeholder="Se ficar vazio, vai o nome do serviço"></textarea>
+        </div>
+      </div>
+
+      <div class="section-title">Composição por {{ unitSymbol() }}</div>
+      <p class="muted hint">Quanto de cada insumo o serviço consome por {{ unitSymbol() }}, mais a perda (sobras, quebras, cortes).</p>
+      <div class="lines" formArrayName="composition">
+        @if (lines.length) {
+          <div class="line head"><span>Insumo</span><span>Consumo</span><span>Perda (%)</span><span class="cost">Custo</span><span></span></div>
+        }
+        @for (g of lines.controls; track g; let i = $index) {
+          <div class="line" [formGroupName]="i">
+            <select formControlName="materialId" [attr.aria-label]="'Insumo da linha ' + (i + 1)">
+              <option [ngValue]="null" disabled>Escolha o insumo…</option>
+              @for (m of materials(); track m.id) { <option [ngValue]="m.id">{{ m.name }} ({{ symbols[m.unit] }})</option> }
+            </select>
+            <input type="number" min="0" step="0.01" formControlName="quantityPerUnit" [placeholder]="materialUnit(i) || '0'"
+                   [attr.aria-label]="'Consumo da linha ' + (i + 1)" />
+            <input type="number" min="0" max="100" step="1" formControlName="wastePercent" [attr.aria-label]="'Perda da linha ' + (i + 1)" />
+            <span class="cost numeric" [class.missing]="costs()[i] == null">{{ costs()[i] == null ? '—' : formatMoney(costs()[i]) }}</span>
+            <button type="button" class="btn btn-icon icon-only" aria-label="Remover insumo" (click)="removeLine(i)">
+              <app-icon name="x" />
+            </button>
+          </div>
+        }
+        <button type="button" class="btn btn-ghost add" (click)="addLine()"><app-icon name="plus" [size]="14" />Adicionar insumo</button>
+        <div class="total">
+          <span>Material por {{ unitSymbol() }}</span>
+          <span class="numeric">{{ formatMoney(total()) }}</span>
+        </div>
+        @if (missingPrice()) {
+          <small class="field-error">Há insumo sem preço; o total está incompleto.</small>
+        }
+      </div>
+    </div>
+    <div class="dialog-footer">
+      <button type="button" class="btn btn-secondary" (click)="closed.emit()">Cancelar</button>
+      <button type="submit" class="btn btn-primary" appBlueprint [disabled]="saving()">
+        {{ saving() ? 'Salvando…' : 'Salvar serviço' }}
+      </button>
+    </div>
+  </form>
+</app-dialog>

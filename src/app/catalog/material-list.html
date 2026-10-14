@@ -1,0 +1,107 @@
+<div class="page">
+  <section class="page-main">
+    <app-catalog-header />
+
+    <div class="content">
+      <div class="toolbar">
+        <div class="search">
+          <app-icon name="search" />
+          <input type="search" placeholder="Buscar insumo…" aria-label="Buscar insumo"
+                 (input)="onSearch($any($event.target).value)" />
+        </div>
+        @if (!loading()) {
+          <span class="tag tag-accent">{{ materials().length }} {{ materials().length === 1 ? 'insumo' : 'insumos' }}</span>
+        }
+        <button type="button" class="btn btn-primary" appBlueprint (click)="openCreate()">
+          <app-icon name="plus" />Novo insumo
+        </button>
+      </div>
+
+      @if (error(); as message) {
+        <div class="alert-error" role="alert">{{ message }}</div>
+      }
+
+      <div class="table-frame" appBlueprint>
+        <div class="table-scroll">
+          <table class="table">
+            <thead>
+              <tr><th>Insumo</th><th>Unidade</th><th class="right">Preço</th><th>Atualizado em</th><th>Usado em</th></tr>
+            </thead>
+            <tbody>
+              @for (m of materials(); track m.id) {
+                <tr class="selectable" [class.selected]="m.id === selected()?.id" (click)="select(m)">
+                  <td>
+                    <div class="name-cell">
+                      <span class="name">{{ m.name }}</span>
+                      @if (m.supplier) { <span class="meta">{{ m.supplier }}</span> }
+                    </div>
+                  </td>
+                  <td>{{ unit[m.unit] }}</td>
+                  <td class="numeric right" [class.missing]="m.price == null">{{ m.price == null ? 'sem preço' : formatMoney(m.price) }}</td>
+                  <td class="numeric">{{ formatDate(m.updatedOn) }}</td>
+                  <td class="muted">{{ m.usedBy.length ? m.usedBy.length + (m.usedBy.length === 1 ? ' serviço' : ' serviços') : '—' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+          @if (materials().length === 0) {
+            <div class="empty">{{ loading() ? 'Carregando…' : 'Nenhum insumo encontrado.' }}</div>
+          }
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <aside class="aside">
+    @if (selected(); as m) {
+      <div class="aside-head">
+        <div class="kicker-row">
+          <span class="kicker">Ficha do insumo</span>
+          <span class="badge">{{ unit[m.unit] }}</span>
+        </div>
+        <div class="title">{{ m.name }}</div>
+        <div class="subtitle">{{ m.price == null ? 'Sem preço informado' : formatMoney(m.price) + ' por ' + unit[m.unit] }}</div>
+      </div>
+
+      <div class="aside-body">
+        <div class="aside-row detail"><span class="muted">Fornecedor</span><span [class.missing]="!m.supplier">{{ m.supplier || 'Não informado' }}</span></div>
+        <div class="aside-row detail"><span class="muted">Preço atualizado</span><span class="numeric">{{ formatDate(m.updatedOn) }}</span></div>
+
+        <div class="aside-box" appBlueprint>
+          <span class="box-kicker">Histórico de preço</span>
+          <div class="box-list">
+            @for (p of prices(); track $index) {
+              <div class="box-line"><span class="numeric">{{ formatDate(p.effectiveDate) }}</span><span class="numeric amount">{{ formatMoney(p.price) }}</span></div>
+            } @empty {
+              <span class="muted" style="font-size: 13px">Nenhum preço registrado.</span>
+            }
+          </div>
+        </div>
+
+        <div class="aside-box" appBlueprint>
+          <span class="box-kicker">Usado nos serviços</span>
+          <div class="box-list">
+            @for (s of m.usedBy; track $index) {
+              <div class="box-line"><span>{{ s }}</span></div>
+            } @empty {
+              <span class="muted" style="font-size: 13px">Nenhum serviço usa este insumo.</span>
+            }
+          </div>
+        </div>
+      </div>
+
+      <div class="aside-actions">
+        <button type="button" class="btn btn-primary btn-block" appBlueprint (click)="openEdit(m)">
+          <app-icon name="pencil" />Editar
+        </button>
+        <button type="button" class="btn btn-secondary" style="padding: 0 14px" (click)="remove(m)">Remover</button>
+      </div>
+    } @else {
+      <div class="aside-empty">{{ loading() ? 'Carregando…' : 'Cadastre um insumo para ver a ficha.' }}</div>
+    }
+  </aside>
+</div>
+
+@if (dialog(); as d) {
+  <app-material-dialog [material]="d.material" (saved)="onSaved($event)" (closed)="dialog.set(null)" />
+}

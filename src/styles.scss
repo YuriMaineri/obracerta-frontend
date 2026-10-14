@@ -94,7 +94,6 @@ img { display: block; max-width: 100%; }
   }
 }
 
-/* Botões */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -145,7 +144,6 @@ img { display: block; max-width: 100%; }
 .btn-icon { width: 36px; height: 36px; padding: 0; }
 .btn-block { flex: 1; }
 
-/* Campos */
 .field {
   display: flex;
   flex-direction: column;
@@ -203,7 +201,6 @@ input[type='checkbox'] { width: 16px; height: 16px; accent-color: var(--color-ac
   color: var(--color-accent-700);
 }
 
-/* Segmentado */
 .seg {
   display: inline-flex;
   flex: none;
@@ -226,7 +223,6 @@ input[type='checkbox'] { width: 16px; height: 16px; accent-color: var(--color-ac
   }
 }
 
-/* Tags */
 .tag {
   display: inline-flex;
   align-items: center;
@@ -238,7 +234,6 @@ input[type='checkbox'] { width: 16px; height: 16px; accent-color: var(--color-ac
 
 .tag-accent { background: var(--color-accent-100); color: var(--color-accent-800); }
 
-/* Tabela */
 .table {
   width: 100%;
   border-collapse: collapse;
@@ -273,7 +268,6 @@ input[type='checkbox'] { width: 16px; height: 16px; accent-color: var(--color-ac
   box-shadow: inset 3px 0 0 var(--color-accent);
 }
 
-/* Alertas */
 .alert-error, .notice {
   display: flex;
   gap: 10px;
@@ -286,7 +280,6 @@ input[type='checkbox'] { width: 16px; height: 16px; accent-color: var(--color-ac
 
 .alert-error { margin-bottom: 16px; }
 
-/* Layout de página: conteúdo à esquerda e painel lateral à direita */
 .page {
   display: grid;
   grid-template-columns: minmax(0, 1fr) var(--aside-width);

@@ -23,6 +23,22 @@ export const routes: Routes = [
     loadComponent: () => import('./estimates/estimate-editor').then((m) => m.EstimateEditor),
   },
   {
+    path: 'catalog',
+    children: [
+      { path: '', pathMatch: 'full', redirectTo: 'services' },
+      {
+        path: 'services',
+        title: 'Serviços · ObraCerta',
+        loadComponent: () => import('./catalog/service-list').then((m) => m.ServiceList),
+      },
+      {
+        path: 'materials',
+        title: 'Insumos · ObraCerta',
+        loadComponent: () => import('./catalog/material-list').then((m) => m.MaterialList),
+      },
+    ],
+  },
+  {
     path: 'company',
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'details' },

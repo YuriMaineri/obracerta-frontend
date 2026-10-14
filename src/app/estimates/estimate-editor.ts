@@ -38,9 +38,7 @@ export class EstimateEditor implements OnInit {
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly injector = inject(Injector);
 
-  /** Rota /estimates/:id; ausente em /estimates/new. */
   readonly id = input<string>();
-  /** Query param ?customerId= vindo da ficha do cliente. */
   readonly customerId = input<string>();
 
   protected readonly estimate = signal<EstimateDetails | null>(null);

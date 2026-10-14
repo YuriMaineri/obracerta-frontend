@@ -1,9 +1,7 @@
 import { formatCnpj, formatCpf, onlyDigits } from '../shared/br-formats';
 
-/** INDIVIDUAL = pessoa física (CPF); COMPANY = pessoa jurídica (CNPJ). */
 export type PersonType = 'INDIVIDUAL' | 'COMPANY';
 
-/** Espelha CustomerController.CustomerResponse no back-end. */
 export interface Customer {
   id: number;
   personType: PersonType;
@@ -18,10 +16,8 @@ export interface Customer {
   postalCode: string | null;
 }
 
-/** Espelha o record CustomerRequest no back-end. */
 export type CustomerRequest = Omit<Customer, 'id'>;
 
-/** Formato do Page serializado com spring.data.web.pageable.serialization-mode=via-dto. */
 export interface Page<T> {
   content: T[];
   page: { size: number; number: number; totalElements: number; totalPages: number };

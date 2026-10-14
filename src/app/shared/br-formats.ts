@@ -1,13 +1,8 @@
-/**
- * Formatos e regras de documentos brasileiros.
- * Funcoes puras, sem Angular: testaveis isoladamente e reaproveitaveis em qualquer tela.
- */
 
 export function onlyDigits(value: string | null | undefined): string {
   return (value ?? '').replace(/\D/g, '');
 }
 
-/** Valida CPF pelos dois digitos verificadores (modulo 11). */
 export function isValidCpf(value: string): boolean {
   const d = onlyDigits(value);
   if (d.length !== 11 || /^(\d)\1{10}$/.test(d)) return false;
@@ -19,7 +14,6 @@ export function isValidCpf(value: string): boolean {
   return checkDigit(9) === Number(d[9]) && checkDigit(10) === Number(d[10]);
 }
 
-/** Valida CNPJ pelos dois digitos verificadores (modulo 11 com pesos 2 a 9). */
 export function isValidCnpj(value: string): boolean {
   const d = onlyDigits(value);
   if (d.length !== 14 || /^(\d)\1{13}$/.test(d)) return false;
@@ -36,10 +30,7 @@ export function isValidCnpj(value: string): boolean {
   return checkDigit(12) === Number(d[12]) && checkDigit(13) === Number(d[13]);
 }
 
-/**
- * Aplica uma mascara em que "0" e um digito e qualquer outro caractere e literal.
- * Formata progressivamente, enquanto a pessoa digita: "123" com "000.000.000-00" vira "123".
- */
+/** Máscara em que "0" é dígito e o resto é literal; formata enquanto a pessoa digita. */
 export function applyMask(value: string, mask: string): string {
   const digits = onlyDigits(value);
   let result = '';

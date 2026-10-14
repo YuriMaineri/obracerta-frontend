@@ -1,10 +1,7 @@
 import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
 import { isValidCnpj, isValidCpf, onlyDigits } from './br-formats';
 
-/**
- * Validadores de formulario. Campos vazios passam: obrigatoriedade e papel do
- * Validators.required, para cada campo poder ser opcional ou nao.
- */
+/** Campos vazios passam: a obrigatoriedade fica com Validators.required. */
 
 export type TaxIdKind = 'cpf' | 'cnpj';
 
@@ -20,10 +17,7 @@ export function taxIdValidator(kind: () => TaxIdKind): ValidatorFn {
   };
 }
 
-/**
- * E-mail com dominio completo. O Validators.email do Angular aceita "joao@empresa",
- * sem ponto no dominio, o que nao serve para enviar a proposta.
- */
+/** Exige domínio com ponto; o Validators.email aceita "joao@empresa". */
 const EMAIL_PATTERN = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*\.[a-zA-Z]{2,}$/;
 
 export function emailValidator(control: AbstractControl): ValidationErrors | null {

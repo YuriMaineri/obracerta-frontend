@@ -1,0 +1,117 @@
+<div class="page">
+  <section class="page-main">
+    <app-catalog-header />
+
+    <div class="content">
+      <div class="toolbar">
+        <div class="search">
+          <app-icon name="search" />
+          <input type="search" placeholder="Buscar serviço…" aria-label="Buscar serviço"
+                 (input)="onSearch($any($event.target).value)" />
+        </div>
+        <select aria-label="Categoria" (change)="setCategory($any($event.target).value)">
+          <option value="">Todas as categorias</option>
+          @for (c of categories; track c) { <option [value]="c">{{ categoryLabel[c] }}</option> }
+        </select>
+        @if (!loading()) {
+          <span class="tag tag-accent">{{ services().length }} {{ services().length === 1 ? 'serviço' : 'serviços' }}</span>
+        }
+        <button type="button" class="btn btn-primary" appBlueprint (click)="openCreate()">
+          <app-icon name="plus" />Novo serviço
+        </button>
+      </div>
+
+      @if (error(); as message) {
+        <div class="alert-error" role="alert">{{ message }}</div>
+      }
+
+      <div class="table-frame" appBlueprint>
+        <div class="table-scroll">
+          <table class="table">
+            <thead>
+              <tr><th>Serviço</th><th>Unidade</th><th>Rendimento</th><th class="right">Material por unidade</th></tr>
+            </thead>
+            <tbody>
+              @for (s of services(); track s.id) {
+                <tr class="selectable" [class.selected]="s.id === selected()?.id" (click)="select(s)">
+                  <td>
+                    <div class="name-cell">
+                      <span class="name">{{ s.name }}</span>
+                      <span class="meta">{{ s.category ? categoryLabel[s.category] : 'Sem categoria' }}</span>
+                    </div>
+                  </td>
+                  <td>{{ unit[s.unit] }}</td>
+                  <td>{{ productivityLabel(s) }}</td>
+                  <td class="numeric right">{{ s.composition.length ? formatMoney(s.materialCostPerUnit) : '—' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+          @if (services().length === 0) {
+            <div class="empty">{{ loading() ? 'Carregando…' : 'Nenhum serviço encontrado.' }}</div>
+          }
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <aside class="aside">
+    @if (selected(); as s) {
+      <div class="aside-head">
+        <div class="kicker-row">
+          <span class="kicker">Ficha do serviço</span>
+          @if (s.category) { <span class="badge">{{ categoryLabel[s.category] }}</span> }
+        </div>
+        <div class="title">{{ s.name }}</div>
+        <div class="subtitle">{{ modeLabel[s.pricingMode] }} · cobrado por {{ unit[s.unit] }}</div>
+      </div>
+
+      <div class="aside-body">
+        <div class="aside-row detail"><span class="muted">Rendimento</span><span [class.missing]="s.daysPerUnit == null">{{ productivityLabel(s) }}</span></div>
+        @if (s.daysPerUnit != null && s.unit !== 'LUMP_SUM') {
+          <div class="aside-row detail"><span class="muted">Mão de obra</span><span class="numeric">{{ formatQuantity(s.daysPerUnit) }} diária por {{ unit[s.unit] }}</span></div>
+        }
+        <div class="aside-row detail"><span class="muted">Preço praticado</span><span [class.missing]="s.usualPrice == null">{{ s.usualPrice == null ? 'Não informado' : formatMoney(s.usualPrice) + ' por ' + unit[s.unit] }}</span></div>
+
+        <div class="aside-box" appBlueprint>
+          <span class="box-kicker">Composição por {{ unit[s.unit] }}</span>
+          <div class="box-list">
+            @for (c of s.composition; track c.materialId) {
+              <div class="box-line">
+                <span>{{ c.materialName }}</span>
+                <span class="numeric amount" [class.missing]="c.costPerUnit == null">{{ c.costPerUnit == null ? 'sem preço' : formatMoney(c.costPerUnit) }}</span>
+                <span class="sub">{{ formatQuantity(c.quantityPerUnit) }} {{ unit[c.materialUnit] }}{{ waste(c.wastePercent) }}</span>
+              </div>
+            } @empty {
+              <span class="muted" style="font-size: 13px">Sem insumos: só mão de obra.</span>
+            }
+            @if (s.composition.length) {
+              <div class="box-total"><span>Material por {{ unit[s.unit] }}</span><span class="numeric">{{ formatMoney(s.materialCostPerUnit) }}</span></div>
+              @if (s.missingPrices) { <span class="warning">Há insumo sem preço; o total está incompleto.</span> }
+            }
+          </div>
+        </div>
+
+        @if (s.proposalDescription) {
+          <div class="aside-box" appBlueprint>
+            <span class="box-kicker">Texto na proposta</span>
+            <span class="proposal-text">{{ s.proposalDescription }}</span>
+          </div>
+        }
+      </div>
+
+      <div class="aside-actions">
+        <button type="button" class="btn btn-primary btn-block" appBlueprint (click)="openEdit(s)">
+          <app-icon name="pencil" />Editar
+        </button>
+        <button type="button" class="btn btn-secondary" style="padding: 0 14px" (click)="remove(s)">Remover</button>
+      </div>
+    } @else {
+      <div class="aside-empty">{{ loading() ? 'Carregando…' : 'Cadastre um serviço para ver a ficha.' }}</div>
+    }
+  </aside>
+</div>
+
+@if (dialog(); as d) {
+  <app-service-dialog [service]="d.service" (saved)="onSaved($event)" (closed)="dialog.set(null)" />
+}

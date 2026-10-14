@@ -4,14 +4,7 @@ import { MASKS, applyMask, formatPhone } from './br-formats';
 
 export type MaskType = 'cpf' | 'cnpj' | 'phone' | 'postalCode';
 
-/**
- * Mascara de digitacao para campos numericos brasileiros.
- *
- * Uso: <input formControlName="taxId" [appMask]="'cnpj'" />
- *
- * Aceita so digitos, formata enquanto a pessoa digita ou cola, e limita o tamanho.
- * O valor do FormControl fica formatado; quem envia para a API tira a mascara.
- */
+/** Máscara para campos brasileiros: aceita só dígitos e formata enquanto digita. Ex.: [appMask]="'cnpj'". */
 @Directive({
   selector: 'input[appMask]',
   host: { inputmode: 'numeric', autocomplete: 'off' },
@@ -23,7 +16,6 @@ export class MaskDirective {
   private readonly control = inject(NgControl, { self: true });
 
   constructor() {
-    // Ao trocar a mascara (PF <-> PJ), reformata o que ja estiver no campo.
     effect(() => {
       const type = this.appMask();
       this.element.nativeElement.maxLength = this.maxLength(type);
