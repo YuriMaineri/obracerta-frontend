@@ -1,0 +1,98 @@
+<div class="page">
+  <section class="page-main">
+    <app-company-header />
+
+    <form id="pricing-form" class="sections" [formGroup]="form" (ngSubmit)="save()" novalidate>
+      @if (error(); as message) {
+        <div class="alert-error" role="alert" style="margin-top: 16px">{{ message }}</div>
+      }
+
+      <div class="section">
+        <h3>Mão de obra</h3>
+        <div class="form-grid">
+          <div class="field">
+            <label for="p-daily">Valor da diária de um profissional (R$) *</label>
+            <input id="p-daily" type="number" min="0" step="0.01" formControlName="dailyRate" />
+            @if (fieldError('dailyRate'); as msg) { <small class="field-error">{{ msg }}</small> }
+          </div>
+          <p class="muted hint">O catálogo diz quanto cada serviço rende por dia; o sistema converte em diárias e multiplica por este valor.</p>
+        </div>
+      </div>
+
+      <div class="section">
+        <h3>Sobre o custo</h3>
+        <div class="form-grid">
+          <div class="field">
+            <label for="p-indirect">Custo indireto (%) *</label>
+            <input id="p-indirect" type="number" min="0" max="100" step="0.5" formControlName="indirectPercent" />
+            @if (fieldError('indirectPercent'); as msg) { <small class="field-error">{{ msg }}</small> }
+          </div>
+          <div class="field">
+            <label for="p-margin">Margem (%) *</label>
+            <input id="p-margin" type="number" min="0" max="100" step="0.5" formControlName="marginPercent" />
+            @if (fieldError('marginPercent'); as msg) { <small class="field-error">{{ msg }}</small> }
+          </div>
+          <p class="muted hint wide">Custo indireto cobre deslocamento, ferramentas, telefone e o tempo de orçar. A margem entra por último, sobre tudo.</p>
+        </div>
+      </div>
+
+      <div class="section">
+        <h3>Dificuldade</h3>
+        <div class="form-grid factors">
+          <div class="field">
+            <label for="p-easy">Fácil ×</label>
+            <input id="p-easy" type="number" min="0.1" max="5" step="0.05" formControlName="easyFactor" />
+            @if (fieldError('easyFactor'); as msg) { <small class="field-error">{{ msg }}</small> }
+          </div>
+          <div class="field">
+            <label for="p-normal">Normal ×</label>
+            <input id="p-normal" type="number" min="0.1" max="5" step="0.05" formControlName="normalFactor" />
+            @if (fieldError('normalFactor'); as msg) { <small class="field-error">{{ msg }}</small> }
+          </div>
+          <div class="field">
+            <label for="p-hard">Difícil ×</label>
+            <input id="p-hard" type="number" min="0.1" max="5" step="0.05" formControlName="hardFactor" />
+            @if (fieldError('hardFactor'); as msg) { <small class="field-error">{{ msg }}</small> }
+          </div>
+          <div class="field">
+            <label for="p-vhard">Muito difícil ×</label>
+            <input id="p-vhard" type="number" min="0.1" max="5" step="0.05" formControlName="veryHardFactor" />
+            @if (fieldError('veryHardFactor'); as msg) { <small class="field-error">{{ msg }}</small> }
+          </div>
+          <p class="muted hint wide">Multiplica a mão de obra de cada serviço conforme o que você viu na visita: acesso, altura, estado da parede, móveis no caminho.</p>
+        </div>
+      </div>
+    </form>
+
+    <div class="save-bar">
+      <span class="muted">@if (form.dirty) { Alterações não salvas } @else if (savedAt()) { Salvo às {{ savedAt() }} }</span>
+      <button type="submit" form="pricing-form" class="btn btn-primary" appBlueprint [disabled]="saving() || loading()">
+        {{ saving() ? 'Salvando…' : 'Salvar' }}
+      </button>
+    </div>
+  </section>
+
+  <aside class="aside">
+    <div class="aside-head">
+      <div class="kicker-row"><span class="kicker">Como fica o preço sugerido</span></div>
+      <div class="title">30 m² de pintura de parede</div>
+      <div class="subtitle">Rende 28 m² por dia · R$ 4,46 de material por m²</div>
+    </div>
+    <div class="aside-body">
+      @if (example(); as ex) {
+        <div class="aside-row ex-row"><span class="muted">Mão de obra</span><span class="numeric">{{ formatMoney(ex.normal.laborCost) }} · {{ ex.normal.laborDays.toLocaleString('pt-BR') }} diárias</span></div>
+        <div class="aside-row ex-row"><span class="muted">Material</span><span class="numeric">{{ formatMoney(ex.normal.materialCost) }}</span></div>
+        <div class="aside-row ex-row"><span class="muted">Custo indireto</span><span class="numeric">{{ formatMoney(ex.quote.indirectCost) }}</span></div>
+        <div class="aside-row ex-row"><span class="muted">Margem</span><span class="numeric">{{ formatMoney(ex.quote.margin) }}</span></div>
+        <div class="aside-box" appBlueprint>
+          <span class="box-kicker">Preço sugerido</span>
+          <span class="example-total numeric">{{ formatMoney(ex.quote.total) }}</span>
+          <span class="muted" style="font-size: 13px">Se o serviço for difícil: {{ formatMoney(ex.hard.price) }}</span>
+        </div>
+        <p class="muted" style="font-size: 13px; line-height: 1.5">É uma referência. No orçamento o sugerido aparece ao lado do valor que você digita, e você decide.</p>
+      } @else {
+        <div class="aside-empty">{{ loading() ? 'Carregando…' : 'Preencha os campos para ver o exemplo.' }}</div>
+      }
+    </div>
+  </aside>
+</div>

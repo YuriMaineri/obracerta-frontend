@@ -3,6 +3,8 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { FormArray, FormGroup, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { forkJoin, startWith } from 'rxjs';
+import { ServiceItem, UNIT_SYMBOLS, CATEGORY_LABELS, CATEGORIES } from '../catalog/catalog.model';
+import { CatalogApi } from '../catalog/catalog.service';
 import { BankAccount, CLAUSE_SECTIONS, Clause, ClauseType } from '../company/company.model';
 import { CompanyService } from '../company/company.service';
 import { Customer } from '../customers/customer.model';
@@ -10,6 +12,8 @@ import { CustomerService } from '../customers/customer.service';
 import { BlueprintDirective } from '../shared/blueprint.directive';
 import { errorMessage } from '../shared/http-error';
 import { Icon } from '../shared/icon';
+import { DIFFICULTIES, Difficulty, PricingSettings, chargesMaterial, difference, itemQuote, totalQuote } from '../pricing/pricing.model';
+import { PricingApi } from '../pricing/pricing.service';
 import {
   EstimateDetails,
   EstimateRequest,
@@ -33,6 +37,8 @@ export class EstimateEditor implements OnInit {
   private readonly service = inject(EstimateService);
   private readonly customerService = inject(CustomerService);
   private readonly companyService = inject(CompanyService);
+  private readonly catalogApi = inject(CatalogApi);
+  private readonly pricingApi = inject(PricingApi);
   private readonly router = inject(Router);
   private readonly fb = inject(NonNullableFormBuilder);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
@@ -51,6 +57,10 @@ export class EstimateEditor implements OnInit {
   protected readonly savedAt = signal<string | null>(null);
   protected readonly error = signal<string | null>(null);
   protected readonly clausesDirty = signal(false);
+  protected readonly catalogServices = signal<ServiceItem[]>([]);
+  protected readonly settings = signal<PricingSettings | null>(null);
+  protected readonly difficulties = DIFFICULTIES;
+  protected readonly unitSymbols = UNIT_SYMBOLS;
 
   protected readonly statusLabels = STATUS_LABELS;
   protected readonly statuses = Object.keys(STATUS_LABELS) as EstimateStatus[];
@@ -114,6 +124,41 @@ export class EstimateEditor implements OnInit {
     };
   });
 
+  protected readonly catalogGroups = computed(() =>
+    CATEGORIES.map((c) => ({ category: c, label: CATEGORY_LABELS[c], services: this.catalogServices().filter((s) => s.category === c) })).filter(
+      (g) => g.services.length,
+    ),
+  );
+
+  /** Preço sugerido ao vivo, com a mesma conta que o backend grava ao salvar. */
+  protected readonly pricing = computed(() => {
+    const settings = this.settings();
+    const v = { ...this.form.getRawValue(), ...this.values() };
+    const supply = v.materialSupply as MaterialSupply;
+    const charge = chargesMaterial(supply);
+    const byId = new Map(this.catalogServices().map((s) => [s.id, s]));
+    const lines = ((v.services ?? []) as { serviceId: number | null; quantity: number | null; difficulty: Difficulty }[]).map((s) => {
+      const service = s.serviceId == null ? undefined : byId.get(s.serviceId);
+      if (!settings || !service) return null;
+      const quantity = service.unit === 'LUMP_SUM' ? 1 : (s.quantity ?? 0);
+      return quantity > 0 ? itemQuote(settings, quantity, service.daysPerUnit, service.materialCostPerUnit, s.difficulty, charge) : null;
+    });
+    const quotes = lines.filter((l) => l != null);
+    const quote = settings && quotes.length ? totalQuote(settings, quotes, charge) : null;
+    const itemized = supply === 'ITEMIZED' ? sumMaterials(((v.materials ?? []) as { totalPrice: number | null }[]) as never) : 0;
+    const practiced =
+      ((v.priceLines ?? []) as { amount: number | null; alternative: boolean }[]).filter((p) => !p.alternative).reduce((sum, p) => sum + (p.amount ?? 0), 0) +
+      itemized;
+    return {
+      lines,
+      quote,
+      settings,
+      practiced,
+      itemized,
+      difference: quote && practiced ? difference(practiced, quote.total) : null,
+    };
+  });
+
   protected readonly materialTotal = computed(() => {
     const v = this.values();
     return sumMaterials(((v.materials ?? []) as { totalPrice: number | null }[]) as never);
@@ -149,8 +194,12 @@ export class EstimateEditor implements OnInit {
       customers: this.customerService.search('', null, 0, 100),
       accounts: this.companyService.listBankAccounts(),
       clauses: this.companyService.listClauses(),
+      catalog: this.catalogApi.listServices(),
+      settings: this.pricingApi.get(),
     }).subscribe({
-      next: ({ customers, accounts, clauses }) => {
+      next: ({ customers, accounts, clauses, catalog, settings }) => {
+        this.catalogServices.set(catalog);
+        this.settings.set(settings);
         this.customers.set(customers.content);
         this.bankAccounts.set(accounts);
         this.clauses.set(clauses);
@@ -167,8 +216,52 @@ export class EstimateEditor implements OnInit {
     });
   }
 
-  protected addService(value = { description: '', internalNote: '' }): void {
-    this.services.push(this.fb.group({ description: [value.description], internalNote: [value.internalNote ?? ''], showNote: [!!value.internalNote] }));
+  protected addService(value: ServiceLineValue = { description: '', internalNote: '' }): void {
+    const group = this.fb.group({
+      description: [value.description],
+      internalNote: [value.internalNote ?? ''],
+      showNote: [!!value.internalNote],
+      serviceId: this.fb.control<number | null>(value.serviceId ?? null),
+      quantity: this.fb.control<number | null>(value.quantity ?? null, Validators.min(0)),
+      difficulty: this.fb.control<Difficulty>(value.difficulty ?? 'NORMAL'),
+      showCalc: [value.serviceId != null],
+    });
+    group.controls.serviceId.valueChanges.subscribe((id) => {
+      const service = this.catalogFor(id);
+      if (service && !group.controls.description.value.trim()) {
+        group.controls.description.setValue(service.proposalDescription || service.name);
+      }
+    });
+    this.services.push(group);
+    this.form.markAsDirty();
+  }
+
+  protected catalogFor(id: number | null | undefined): ServiceItem | undefined {
+    return id == null ? undefined : this.catalogServices().find((s) => s.id === id);
+  }
+
+  protected toggleCalc(group: FormGroup): void {
+    const show = !group.get('showCalc')!.value;
+    group.patchValue({ showCalc: show });
+    if (!show) group.patchValue({ serviceId: null, quantity: null, difficulty: 'NORMAL' });
+  }
+
+  protected linePrice(index: number): string {
+    const line = this.pricing().lines[index];
+    return line ? formatMoney(line.price) : '—';
+  }
+
+  /** Preenche o primeiro valor com o sugerido; no material detalhado, desconta o que já está na lista. */
+  protected useSuggested(): void {
+    const { quote, itemized } = this.pricing();
+    if (!quote) return;
+    const amount = Math.max(0, Math.round((quote.total - itemized) * 100) / 100);
+    const target = this.priceLines.controls.find((g) => !g.value.alternative);
+    if (target) {
+      target.patchValue({ amount, description: target.value.description?.trim() || 'Valor da mão de obra e material' });
+    } else {
+      this.addPriceLine({ description: 'Valor da mão de obra e material', amount });
+    }
     this.form.markAsDirty();
   }
 
@@ -272,6 +365,14 @@ export class EstimateEditor implements OnInit {
 
   protected save(onSaved?: () => void, onFailed?: () => void): void {
     this.dropEmptyRows();
+    const missingQuantity = this.services.controls.find((g) => {
+      const service = this.catalogFor(g.value.serviceId);
+      return service && service.unit !== 'LUMP_SUM' && !(g.value.quantity > 0);
+    });
+    if (missingQuantity) {
+      missingQuantity.get('quantity')!.setErrors({ required: true });
+      missingQuantity.markAllAsTouched();
+    }
     const missingAmount = this.priceLines.controls.find((g) => g.value.description?.trim() && g.value.amount == null);
     if (missingAmount) {
       missingAmount.get('amount')!.setErrors({ required: true });
@@ -297,7 +398,13 @@ export class EstimateEditor implements OnInit {
       paymentTerms: text(v.paymentTerms),
       bankAccountId: v.bankAccountId,
       clauseIds: [...this.selectedClauses()],
-      services: v.services.map((s) => ({ description: s['description'].trim(), internalNote: text(s['internalNote']) })),
+      services: v.services.map((s) => ({
+        description: s['description'].trim(),
+        internalNote: text(s['internalNote']),
+        serviceId: s['serviceId'] ?? null,
+        quantity: s['serviceId'] != null ? s['quantity'] : null,
+        difficulty: s['serviceId'] != null ? s['difficulty'] : null,
+      })),
       materials: v.materials.map((m) => ({ description: m['description'].trim(), quantity: m['quantity'], totalPrice: m['totalPrice'] })),
       priceLines: v.priceLines.map((p) => ({ description: p['description'].trim(), amount: p['amount'], alternative: !!p['alternative'] })),
       exclusions: v.exclusions.map((x) => x.trim()),
@@ -380,7 +487,9 @@ export class EstimateEditor implements OnInit {
       paymentTerms: e.paymentTerms ?? '',
       bankAccountId: e.bankAccountId,
     });
-    e.services.forEach((s) => this.addService({ description: s.description, internalNote: s.internalNote ?? '' }));
+    e.services.forEach((s) =>
+      this.addService({ description: s.description, internalNote: s.internalNote ?? '', serviceId: s.serviceId, quantity: s.quantity, difficulty: s.difficulty }),
+    );
     e.materials.forEach((m) => this.addMaterial(m));
     e.priceLines.forEach((p) => this.addPriceLine(p));
     e.exclusions.forEach((x) => this.addExclusion(x));
@@ -407,6 +516,14 @@ export class EstimateEditor implements OnInit {
     this.error.set(errorMessage(e));
     this.loading.set(false);
   }
+}
+
+interface ServiceLineValue {
+  description: string;
+  internalNote: string;
+  serviceId?: number | null;
+  quantity?: number | null;
+  difficulty?: Difficulty | null;
 }
 
 function clip(text: string, max: number): string {

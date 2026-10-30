@@ -53,12 +53,43 @@
               <div class="line">
                 <span class="bullet">•</span>
                 <textarea formControlName="description" rows="1" class="auto" placeholder="Descreva o serviço"></textarea>
+                <button type="button" class="btn btn-ghost" [class.on]="g.value.showCalc" (click)="toggleCalc(g)"
+                        title="Ligar ao catálogo para ver o preço sugerido">Calcular</button>
                 <button type="button" class="btn btn-ghost" [class.on]="g.value.showNote" (click)="toggleNote(g)"
                         title="Recado só para você; não vai para o cliente">Nota interna</button>
                 <button type="button" class="btn btn-icon icon-only" aria-label="Remover serviço" (click)="remove(services, i)">
                   <app-icon name="x" />
                 </button>
               </div>
+              @if (g.value.showCalc) {
+                <div class="calc-row">
+                  <select formControlName="serviceId" aria-label="Serviço do catálogo">
+                    <option [ngValue]="null">Escolha o serviço do catálogo…</option>
+                    @for (grp of catalogGroups(); track grp.category) {
+                      <optgroup [label]="grp.label">
+                        @for (s of grp.services; track s.id) { <option [ngValue]="s.id">{{ s.name }}</option> }
+                      </optgroup>
+                    }
+                  </select>
+                  @if (catalogFor(g.value.serviceId); as cs) {
+                    @if (cs.unit !== 'LUMP_SUM') {
+                      <div class="qty">
+                        <input type="number" min="0" step="0.01" formControlName="quantity" aria-label="Quantidade" placeholder="Qtd." />
+                        <span>{{ unitSymbols[cs.unit] }}</span>
+                      </div>
+                    } @else {
+                      <span class="qty muted">verba</span>
+                    }
+                    <select formControlName="difficulty" aria-label="Dificuldade">
+                      @for (d of difficulties; track d.value) { <option [value]="d.value">{{ d.label }}</option> }
+                    </select>
+                    <span class="calc-price numeric" title="Preço sugerido deste serviço, com custo indireto e margem">{{ linePrice(i) }}</span>
+                  }
+                </div>
+                @if (g.get('quantity')?.touched && g.get('quantity')?.invalid) {
+                  <small class="field-error indent">Informe a quantidade para calcular.</small>
+                }
+              }
               @if (g.value.showNote) {
                 <div class="internal-note">
                   <span class="internal-tag">Só para você</span>
@@ -258,6 +289,32 @@
           }
         </div>
       </div>
+      <div class="aside-box suggestion" appBlueprint>
+        <span class="box-kicker">Preço sugerido</span>
+        @if (pricing(); as p) {
+          @if (p.quote; as q) {
+            <div class="calc-lines">
+              <div><span>Mão de obra · {{ q.laborDays.toLocaleString('pt-BR') }} {{ q.laborDays === 1 ? 'diária' : 'diárias' }}</span><span class="numeric">{{ formatMoney(q.laborCost) }}</span></div>
+              <div [class.muted]="!q.materialCharged">
+                <span>Material{{ q.materialCharged ? '' : ' (não entra no preço)' }}</span><span class="numeric">{{ formatMoney(q.materialCost) }}</span>
+              </div>
+              <div><span>Custo indireto · {{ p.settings!.indirectPercent }}%</span><span class="numeric">{{ formatMoney(q.indirectCost) }}</span></div>
+              <div><span>Margem · {{ p.settings!.marginPercent }}%</span><span class="numeric">{{ formatMoney(q.margin) }}</span></div>
+            </div>
+            <div class="calc-total"><span>Sugerido</span><span class="numeric">{{ formatMoney(q.total) }}</span></div>
+            @if (p.practiced > 0) {
+              <div class="calc-practiced">
+                <span>Você está cobrando <strong class="numeric">{{ formatMoney(p.practiced) }}</strong></span>
+                @if (p.difference; as diff) { <span class="diff" [class.below]="diff.startsWith('-')" title="Diferença em relação ao sugerido">{{ diff }}</span> }
+              </div>
+            }
+            <button type="button" class="btn btn-secondary" (click)="useSuggested()">Usar o sugerido nos valores</button>
+          } @else {
+            <span class="muted" style="font-size: 13px">Use “Calcular” nos serviços para ligar ao catálogo e ver o preço sugerido ao lado do seu.</span>
+          }
+        }
+      </div>
+
       <div class="aside-row detail"><span class="muted">Material</span><span>{{ summary().material }}</span></div>
       <div class="aside-row detail"><span class="muted">Prazo</span><span>{{ summary().leadTime }}</span></div>
       <div class="aside-row detail"><span class="muted">Conta</span><span>{{ summary().account }}</span></div>

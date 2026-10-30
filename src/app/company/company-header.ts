@@ -10,6 +10,7 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
       <a routerLink="/company/details" routerLinkActive="active">Dados e logotipo</a>
       <a routerLink="/company/bank-accounts" routerLinkActive="active">Contas bancárias</a>
       <a routerLink="/company/clauses" routerLinkActive="active">Cláusulas</a>
+      <a routerLink="/company/pricing" routerLinkActive="active">Preço e mão de obra</a>
     </nav>
   `,
   styles: `

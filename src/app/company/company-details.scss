@@ -92,3 +92,9 @@
 }
 
 .logo-actions { display: flex; gap: 10px; }
+
+.hint { font-size: 13px; line-height: 1.5; align-self: end; }
+.hint.wide { grid-column: 1 / -1; }
+.factors { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.example-total { font-family: var(--font-heading); font-weight: 600; font-size: 34px; line-height: 1; }
+.ex-row { display: flex; justify-content: space-between; gap: 12px; font-size: 15px; .muted { font-size: 13px; } }

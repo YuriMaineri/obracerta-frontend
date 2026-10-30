@@ -57,6 +57,11 @@ export const routes: Routes = [
         title: 'Cláusulas · ObraCerta',
         loadComponent: () => import('./company/clauses').then((m) => m.Clauses),
       },
+      {
+        path: 'pricing',
+        title: 'Preço e mão de obra · ObraCerta',
+        loadComponent: () => import('./company/pricing-settings').then((m) => m.PricingSettingsPage),
+      },
     ],
   },
   { path: '**', redirectTo: 'customers' },

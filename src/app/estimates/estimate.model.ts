@@ -1,4 +1,5 @@
 import { Page } from '../customers/customer.model';
+import type { Difficulty } from '../pricing/pricing.model';
 
 export type EstimateStatus = 'DRAFT' | 'SENT' | 'APPROVED' | 'REJECTED';
 export type MaterialSupply = 'ITEMIZED' | 'ESTIMATED' | 'BY_RECEIPT' | 'CUSTOMER_SUPPLIED';
@@ -35,6 +36,10 @@ export interface EstimateSummary {
 export interface ServiceLine {
   description: string;
   internalNote: string | null;
+  serviceId?: number | null;
+  quantity?: number | null;
+  difficulty?: Difficulty | null;
+  suggestedPrice?: number | null;
 }
 
 export interface MaterialLine {
@@ -78,6 +83,8 @@ export interface EstimateDetails {
   priceLines: PriceLine[];
   exclusions: string[];
   internalNotes: string[];
+  suggestedTotal: number | null;
+  suggestedDays: number | null;
   updatedAt: string;
 }
 

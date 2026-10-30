@@ -133,7 +133,7 @@ export interface ServiceRequest {
 /** Mesma conta do backend: consumo × (1 + perda) × preço, arredondado em centavos. Nulo sem preço. */
 export function lineCost(quantityPerUnit: number, wastePercent: number | null, price: number | null): number | null {
   if (price == null) return null;
-  return Math.round(quantityPerUnit * (1 + (wastePercent ?? 0) / 100) * price * 100) / 100;
+  return Math.round(Number((quantityPerUnit * (1 + (wastePercent ?? 0) / 100) * price * 100).toFixed(6))) / 100;
 }
 
 /** "Rende 28 m² por dia" vira 0,0357 diária por m²; o banco guarda diárias por unidade. */

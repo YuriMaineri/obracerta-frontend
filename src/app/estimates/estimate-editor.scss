@@ -140,3 +140,53 @@ textarea.auto { min-height: 36px; field-sizing: content; resize: none; }
 }
 
 .note-input { display: flex; gap: 8px; .btn { height: 36px; } }
+
+.calc-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 130px 130px 96px;
+  gap: 8px;
+  align-items: center;
+  margin: 6px 0 0 22px;
+  padding-left: 10px;
+  border-left: 3px solid var(--color-accent);
+
+  .qty { display: flex; align-items: center; gap: 6px; span { font-size: 13px; color: var(--color-neutral-700); } }
+  .calc-price { text-align: right; font-size: 14px; font-weight: 500; }
+}
+
+.suggestion {
+  gap: 10px;
+
+  .calc-lines {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 13px;
+    div { display: flex; justify-content: space-between; gap: 12px; }
+  }
+
+  .calc-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding-top: 8px;
+    border-top: 1px solid var(--color-divider);
+    font-family: var(--font-heading);
+    font-weight: 600;
+    font-size: 24px;
+  }
+
+  .calc-practiced {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+
+    .diff { font-weight: 600; color: var(--color-accent-700); }
+    .diff.below { color: var(--color-error); }
+  }
+
+  .btn { align-self: flex-start; }
+}
+
+.line-block > .line { grid-template-columns: 14px minmax(0, 1fr) auto auto auto; }
