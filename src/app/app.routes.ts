@@ -1,66 +1,78 @@
 import { Routes } from '@angular/router';
+import { authGuard } from './auth/auth.guard';
 
 export const routes: Routes = [
-  { path: '', pathMatch: 'full', redirectTo: 'customers' },
   {
-    path: 'customers',
-    title: 'Clientes · ObraCerta',
-    loadComponent: () => import('./customers/customer-list').then((m) => m.CustomerList),
+    path: 'login',
+    title: 'Entrar · ObraCerta',
+    loadComponent: () => import('./auth/login').then((m) => m.Login),
   },
   {
-    path: 'estimates',
-    title: 'Orçamentos · ObraCerta',
-    loadComponent: () => import('./estimates/estimate-list').then((m) => m.EstimateList),
-  },
-  {
-    path: 'estimates/new',
-    title: 'Novo orçamento · ObraCerta',
-    loadComponent: () => import('./estimates/estimate-editor').then((m) => m.EstimateEditor),
-  },
-  {
-    path: 'estimates/:id',
-    title: 'Orçamento · ObraCerta',
-    loadComponent: () => import('./estimates/estimate-editor').then((m) => m.EstimateEditor),
-  },
-  {
-    path: 'catalog',
+    path: '',
+    canActivateChild: [authGuard],
     children: [
-      { path: '', pathMatch: 'full', redirectTo: 'services' },
+      { path: '', pathMatch: 'full', redirectTo: 'customers' },
       {
-        path: 'services',
-        title: 'Serviços · ObraCerta',
-        loadComponent: () => import('./catalog/service-list').then((m) => m.ServiceList),
+        path: 'customers',
+        title: 'Clientes · ObraCerta',
+        loadComponent: () => import('./customers/customer-list').then((m) => m.CustomerList),
       },
       {
-        path: 'materials',
-        title: 'Insumos · ObraCerta',
-        loadComponent: () => import('./catalog/material-list').then((m) => m.MaterialList),
-      },
-    ],
-  },
-  {
-    path: 'company',
-    children: [
-      { path: '', pathMatch: 'full', redirectTo: 'details' },
-      {
-        path: 'details',
-        title: 'Empresa · ObraCerta',
-        loadComponent: () => import('./company/company-details').then((m) => m.CompanyDetails),
+        path: 'estimates',
+        title: 'Orçamentos · ObraCerta',
+        loadComponent: () => import('./estimates/estimate-list').then((m) => m.EstimateList),
       },
       {
-        path: 'bank-accounts',
-        title: 'Contas bancárias · ObraCerta',
-        loadComponent: () => import('./company/bank-accounts').then((m) => m.BankAccounts),
+        path: 'estimates/new',
+        title: 'Novo orçamento · ObraCerta',
+        loadComponent: () => import('./estimates/estimate-editor').then((m) => m.EstimateEditor),
       },
       {
-        path: 'clauses',
-        title: 'Cláusulas · ObraCerta',
-        loadComponent: () => import('./company/clauses').then((m) => m.Clauses),
+        path: 'estimates/:id',
+        title: 'Orçamento · ObraCerta',
+        loadComponent: () => import('./estimates/estimate-editor').then((m) => m.EstimateEditor),
       },
       {
-        path: 'pricing',
-        title: 'Preço e mão de obra · ObraCerta',
-        loadComponent: () => import('./company/pricing-settings').then((m) => m.PricingSettingsPage),
+        path: 'catalog',
+        children: [
+          { path: '', pathMatch: 'full', redirectTo: 'services' },
+          {
+            path: 'services',
+            title: 'Serviços · ObraCerta',
+            loadComponent: () => import('./catalog/service-list').then((m) => m.ServiceList),
+          },
+          {
+            path: 'materials',
+            title: 'Insumos · ObraCerta',
+            loadComponent: () => import('./catalog/material-list').then((m) => m.MaterialList),
+          },
+        ],
+      },
+      {
+        path: 'company',
+        children: [
+          { path: '', pathMatch: 'full', redirectTo: 'details' },
+          {
+            path: 'details',
+            title: 'Empresa · ObraCerta',
+            loadComponent: () => import('./company/company-details').then((m) => m.CompanyDetails),
+          },
+          {
+            path: 'bank-accounts',
+            title: 'Contas bancárias · ObraCerta',
+            loadComponent: () => import('./company/bank-accounts').then((m) => m.BankAccounts),
+          },
+          {
+            path: 'clauses',
+            title: 'Cláusulas · ObraCerta',
+            loadComponent: () => import('./company/clauses').then((m) => m.Clauses),
+          },
+          {
+            path: 'pricing',
+            title: 'Preço e mão de obra · ObraCerta',
+            loadComponent: () => import('./company/pricing-settings').then((m) => m.PricingSettingsPage),
+          },
+        ],
       },
     ],
   },
