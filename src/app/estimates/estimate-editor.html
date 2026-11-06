@@ -308,7 +308,10 @@
                 @if (p.difference; as diff) { <span class="diff" [class.below]="diff.startsWith('-')" title="Diferença em relação ao sugerido">{{ diff }}</span> }
               </div>
             }
-            <button type="button" class="btn btn-secondary" (click)="useSuggested()">Usar o sugerido nos valores</button>
+            <div class="calc-actions">
+              <button type="button" class="btn btn-secondary" (click)="useSuggested()">Usar o sugerido nos valores</button>
+              <button type="button" class="btn btn-ghost" (click)="memoryOpen.set(true)">Memória de cálculo</button>
+            </div>
           } @else {
             <span class="muted" style="font-size: 13px">Use “Calcular” nos serviços para ligar ao catálogo e ver o preço sugerido ao lado do seu.</span>
           }
@@ -352,3 +355,7 @@
     </div>
   </aside>
 </div>
+
+@if (memoryOpen() && memory(); as m) {
+  <app-calculation-memory [items]="m.items" [shopping]="m.shopping" [quote]="m.quote" [settings]="m.settings" (closed)="memoryOpen.set(false)" />
+}

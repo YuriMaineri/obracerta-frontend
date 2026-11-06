@@ -12,7 +12,18 @@ import { CustomerService } from '../customers/customer.service';
 import { BlueprintDirective } from '../shared/blueprint.directive';
 import { errorMessage } from '../shared/http-error';
 import { Icon } from '../shared/icon';
-import { DIFFICULTIES, Difficulty, PricingSettings, chargesMaterial, difference, itemQuote, totalQuote } from '../pricing/pricing.model';
+import {
+  DIFFICULTIES,
+  Difficulty,
+  PricingSettings,
+  chargesMaterial,
+  difference,
+  factorFor,
+  itemQuote,
+  materialUse,
+  shoppingList,
+  totalQuote,
+} from '../pricing/pricing.model';
 import { PricingApi } from '../pricing/pricing.service';
 import {
   EstimateDetails,
@@ -25,11 +36,12 @@ import {
   formatMoney,
   sumMaterials,
 } from './estimate.model';
+import { CalculationMemory, MemoryItem } from './calculation-memory';
 import { EstimateService } from './estimate.service';
 
 @Component({
   selector: 'app-estimate-editor',
-  imports: [ReactiveFormsModule, RouterLink, BlueprintDirective, Icon],
+  imports: [ReactiveFormsModule, RouterLink, BlueprintDirective, Icon, CalculationMemory],
   templateUrl: './estimate-editor.html',
   styleUrl: './estimate-editor.scss',
 })
@@ -157,6 +169,34 @@ export class EstimateEditor implements OnInit {
       itemized,
       difference: quote && practiced ? difference(practiced, quote.total) : null,
     };
+  });
+
+  protected readonly memoryOpen = signal(false);
+
+  /** Memória de cálculo ao vivo: o que entrou em cada serviço e a lista de compra. */
+  protected readonly memory = computed(() => {
+    const { settings, lines, quote } = this.pricing();
+    if (!settings || !quote) return null;
+    const services = (this.values().services ?? []) as { description: string; serviceId: number | null; difficulty: Difficulty }[];
+    const items: MemoryItem[] = [];
+    services.forEach((s, i) => {
+      const service = this.catalogFor(s.serviceId);
+      const line = lines[i];
+      if (!service || !line) return;
+      const quantity = service.unit === 'LUMP_SUM' ? 1 : (this.services.at(i).value.quantity as number);
+      items.push({
+        description: s.description?.trim() ?? '',
+        serviceName: service.name,
+        unit: service.unit,
+        quantity,
+        daysPerUnit: service.daysPerUnit,
+        difficultyLabel: DIFFICULTIES.find((d) => d.value === (s.difficulty ?? 'NORMAL'))!.label,
+        factor: factorFor(settings, s.difficulty),
+        quote: line,
+        materials: service.composition.map((c) => materialUse(quantity, c)),
+      });
+    });
+    return { items, shopping: shoppingList(items.flatMap((i) => i.materials)), quote, settings };
   });
 
   protected readonly materialTotal = computed(() => {

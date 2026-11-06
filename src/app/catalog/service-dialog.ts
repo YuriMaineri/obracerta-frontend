@@ -119,6 +119,8 @@ export class ServiceDialog implements OnInit {
           unit: c.materialUnit,
           price: c.materialPrice,
           supplier: null,
+          packageName: c.packageName,
+          packageSize: c.packageSize,
           updatedOn: null,
           usedBy: [],
         }))

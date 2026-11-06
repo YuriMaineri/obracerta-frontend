@@ -52,6 +52,9 @@ export const MATERIAL_UNITS: Unit[] = [
   'PIECE', 'METER', 'SQUARE_METER', 'CUBIC_METER', 'KILOGRAM', 'LITER', 'BAG', 'CAN', 'ROLL', 'BAR', 'BOX', 'PACKAGE',
 ];
 
+/** Só se compra inteiro: 2,3 sacos viram 3. Metro, m², litro e kg podem ser fracionados. */
+export const SOLD_WHOLE: Unit[] = ['PIECE', 'POINT', 'BAG', 'CAN', 'ROLL', 'BAR', 'BOX', 'PACKAGE'];
+
 export const SERVICE_UNITS: Unit[] = ['SQUARE_METER', 'METER', 'CUBIC_METER', 'PIECE', 'POINT', 'LUMP_SUM'];
 
 export const CATEGORY_LABELS: Record<ServiceCategory, string> = {
@@ -80,6 +83,8 @@ export interface Material {
   unit: Unit;
   price: number | null;
   supplier: string | null;
+  packageName: string | null;
+  packageSize: number | null;
   updatedOn: string | null;
   usedBy: string[];
 }
@@ -89,6 +94,8 @@ export interface MaterialRequest {
   unit: Unit;
   price: number | null;
   supplier: string | null;
+  packageName: string | null;
+  packageSize: number | null;
 }
 
 export interface MaterialPrice {
@@ -101,6 +108,8 @@ export interface CompositionLine {
   materialName: string;
   materialUnit: Unit;
   materialPrice: number | null;
+  packageName: string | null;
+  packageSize: number | null;
   quantityPerUnit: number;
   wastePercent: number;
   costPerUnit: number | null;
@@ -151,6 +160,11 @@ const decimal = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 4 });
 
 export function formatQuantity(value: number | null | undefined): string {
   return value == null ? '—' : decimal.format(value);
+}
+
+/** "galão de 3,6 L"; nulo quando o insumo não tem embalagem. */
+export function packageLabel(m: { unit: Unit; packageName: string | null; packageSize: number | null }): string | null {
+  return m.packageName && m.packageSize ? `${m.packageName} de ${formatQuantity(m.packageSize)} ${UNIT_SYMBOLS[m.unit]}` : null;
 }
 
 /** "28 m² por dia", ou "2 dias" quando é verba. */

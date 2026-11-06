@@ -1,3 +1,4 @@
+import { CompositionLine, SOLD_WHOLE, Unit } from '../catalog/catalog.model';
 import { MaterialSupply } from '../estimates/estimate.model';
 
 export type Difficulty = 'EASY' | 'NORMAL' | 'HARD' | 'VERY_HARD';
@@ -92,4 +93,90 @@ export function difference(practiced: number, suggested: number): string | null 
   if (!suggested) return null;
   const pct = Math.round(((practiced - suggested) / suggested) * 100);
   return `${pct > 0 ? '+' : ''}${pct}%`;
+}
+
+/** Insumo de um serviço do orçamento: quantity é o consumo já com a perda; cost nulo = insumo sem preço. */
+export interface MaterialUse {
+  materialId: number;
+  material: string;
+  unit: Unit;
+  packageName: string | null;
+  packageSize: number | null;
+  quantityPerUnit: number;
+  wastePercent: number;
+  quantity: number;
+  unitPrice: number | null;
+  cost: number | null;
+}
+
+/** Um insumo somado em todos os serviços: cost entra no preço; purchaseCost é o que se paga em embalagens inteiras. */
+export interface ShoppingItem {
+  materialId: number;
+  material: string;
+  unit: Unit;
+  packageName: string | null;
+  packageSize: number | null;
+  needed: number;
+  packages: number | null;
+  bought: number;
+  leftover: number;
+  unitPrice: number | null;
+  cost: number | null;
+  purchaseCost: number | null;
+}
+
+/** Mesma conta do PriceCalculator.material: consumo × (1 + perda) × quantidade; custo pelo custo por unidade. */
+export function materialUse(quantity: number, line: CompositionLine): MaterialUse {
+  return {
+    materialId: line.materialId,
+    material: line.materialName,
+    unit: line.materialUnit,
+    packageName: line.packageName,
+    packageSize: line.packageSize,
+    quantityPerUnit: line.quantityPerUnit,
+    wastePercent: line.wastePercent,
+    quantity: round(quantity * line.quantityPerUnit * (1 + line.wastePercent / 100), 4),
+    unitPrice: line.materialPrice,
+    cost: line.costPerUnit == null ? null : cents(quantity * line.costPerUnit),
+  };
+}
+
+/** Mesma regra do Purchase do backend: embalagem inteira, ou unidade inteira para saco, peça, rolo... */
+export function purchase(unit: Unit, packageSize: number | null, needed: number, price: number | null) {
+  let packages: number | null = null;
+  let bought = needed;
+  if (packageSize) {
+    packages = Math.ceil(round(needed / packageSize, 6));
+    bought = round(packages * packageSize, 4);
+  } else if (SOLD_WHOLE.includes(unit)) {
+    packages = Math.ceil(round(needed, 6));
+    bought = packages;
+  }
+  return { packages, bought, leftover: round(bought - needed, 4), cost: price == null ? null : cents(bought * price) };
+}
+
+/** Soma o mesmo insumo em todos os serviços, na ordem em que aparece, e arredonda para a compra. */
+export function shoppingList(uses: MaterialUse[]): ShoppingItem[] {
+  const byMaterial = new Map<number, MaterialUse[]>();
+  for (const u of uses) byMaterial.set(u.materialId, [...(byMaterial.get(u.materialId) ?? []), u]);
+  return [...byMaterial.values()].map((list) => {
+    const first = list[0];
+    const needed = round(list.reduce((sum, u) => sum + u.quantity, 0), 4);
+    const cost = list.some((u) => u.cost == null) ? null : cents(list.reduce((sum, u) => sum + u.cost!, 0));
+    const p = purchase(first.unit, first.packageSize, needed, first.unitPrice);
+    return {
+      materialId: first.materialId,
+      material: first.material,
+      unit: first.unit,
+      packageName: first.packageName,
+      packageSize: first.packageSize,
+      needed,
+      packages: p.packages,
+      bought: p.bought,
+      leftover: p.leftover,
+      unitPrice: first.unitPrice,
+      cost,
+      purchaseCost: p.cost,
+    };
+  });
 }

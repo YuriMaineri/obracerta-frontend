@@ -6,7 +6,7 @@ import { errorMessage } from '../shared/http-error';
 import { Icon } from '../shared/icon';
 import { formatDate, formatMoney } from '../estimates/estimate.model';
 import { CatalogHeader } from './catalog-header';
-import { Material, MaterialPrice, UNIT_SYMBOLS } from './catalog.model';
+import { Material, MaterialPrice, UNIT_SYMBOLS, packageLabel } from './catalog.model';
 import { CatalogApi } from './catalog.service';
 import { MaterialDialog } from './material-dialog';
 
@@ -32,6 +32,7 @@ export class MaterialList {
 
   protected readonly unit = UNIT_SYMBOLS;
   protected readonly formatMoney = formatMoney;
+  protected readonly packageLabel = packageLabel;
   protected readonly formatDate = formatDate;
 
   private query = '';

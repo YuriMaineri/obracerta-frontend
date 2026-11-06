@@ -35,12 +35,25 @@ import { CatalogApi } from './catalog.service';
               <input id="m-price" type="number" min="0" step="0.01" formControlName="price" placeholder="0,00" />
               @if (fieldError('price'); as msg) { <small class="field-error">{{ msg }}</small> }
             </div>
+            <div class="field">
+              <label for="m-package">Vendido em</label>
+              <input id="m-package" formControlName="packageName" placeholder="Ex.: galão, balde, rolo" />
+              @if (fieldError('packageName'); as msg) { <small class="field-error">{{ msg }}</small> }
+            </div>
+            <div class="field">
+              <label for="m-package-size">Cada embalagem tem ({{ symbols[form.controls.unit.value] }})</label>
+              <input id="m-package-size" type="number" min="0" step="any" formControlName="packageSize" placeholder="Ex.: 3,6" />
+              @if (fieldError('packageSize'); as msg) { <small class="field-error">{{ msg }}</small> }
+            </div>
             <div class="field wide">
               <label for="m-supplier">Fornecedor</label>
               <input id="m-supplier" formControlName="supplier" placeholder="Onde costuma comprar" />
             </div>
           </div>
-          <p class="muted" style="font-size: 13px">Mudar o preço guarda o valor antigo no histórico.</p>
+          <p class="muted" style="font-size: 13px">
+            Mudar o preço guarda o valor antigo no histórico. A embalagem é opcional: serve para a lista de compra do
+            orçamento arredondar para embalagens inteiras (5 L de tinta = 2 galões de 3,6 L).
+          </p>
         </div>
         <div class="dialog-footer">
           <button type="button" class="btn btn-secondary" (click)="closed.emit()">Cancelar</button>
@@ -70,6 +83,8 @@ export class MaterialDialog implements OnInit {
     unit: this.fb.control<Unit>('PIECE'),
     price: this.fb.control<number | null>(null, Validators.min(0)),
     supplier: ['', Validators.maxLength(150)],
+    packageName: ['', Validators.maxLength(30)],
+    packageSize: this.fb.control<number | null>(null, Validators.min(0.001)),
   });
 
   protected readonly fieldError = (name: keyof typeof this.form.controls) =>
@@ -78,11 +93,21 @@ export class MaterialDialog implements OnInit {
   ngOnInit(): void {
     const m = this.material();
     if (m) {
-      this.form.setValue({ name: m.name, unit: m.unit, price: m.price, supplier: m.supplier ?? '' });
+      this.form.setValue({
+        name: m.name,
+        unit: m.unit,
+        price: m.price,
+        supplier: m.supplier ?? '',
+        packageName: m.packageName ?? '',
+        packageSize: m.packageSize,
+      });
     }
   }
 
   protected save(): void {
+    const { packageName, packageSize } = this.form.getRawValue();
+    if (packageName.trim() && packageSize == null) this.form.controls.packageSize.setErrors({ required: true });
+    if (!packageName.trim() && packageSize != null) this.form.controls.packageName.setErrors({ required: true });
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
@@ -96,6 +121,8 @@ export class MaterialDialog implements OnInit {
         unit: v.unit,
         price: v.price,
         supplier: v.supplier.trim() || null,
+        packageName: v.packageName.trim() || null,
+        packageSize: v.packageName.trim() ? v.packageSize : null,
       })
       .subscribe({
         next: (m) => this.saved.emit(m),

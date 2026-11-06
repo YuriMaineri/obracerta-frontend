@@ -186,7 +186,7 @@ textarea.auto { min-height: 36px; field-sizing: content; resize: none; }
     .diff.below { color: var(--color-error); }
   }
 
-  .btn { align-self: flex-start; }
+  .calc-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 }
 
 .line-block > .line { grid-template-columns: 14px minmax(0, 1fr) auto auto auto; }

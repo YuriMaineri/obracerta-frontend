@@ -65,6 +65,7 @@
 
       <div class="aside-body">
         <div class="aside-row detail"><span class="muted">Fornecedor</span><span [class.missing]="!m.supplier">{{ m.supplier || 'Não informado' }}</span></div>
+        <div class="aside-row detail"><span class="muted">Vendido em</span><span [class.missing]="!packageLabel(m)">{{ packageLabel(m) || 'Unidade solta' }}</span></div>
         <div class="aside-row detail"><span class="muted">Preço atualizado</span><span class="numeric">{{ formatDate(m.updatedOn) }}</span></div>
 
         <div class="aside-box" appBlueprint>
