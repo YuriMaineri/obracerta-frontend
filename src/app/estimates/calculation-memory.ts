@@ -1,16 +1,8 @@
 import { Component, computed, input, output } from '@angular/core';
-import { UNIT_SYMBOLS, Unit, formatQuantity, packageLabel } from '../catalog/catalog.model';
+import { Unit, formatQuantity, packageLabel, unitLabel } from '../catalog/catalog.model';
 import { ItemQuote, MaterialUse, PricingSettings, Quote, ShoppingItem } from '../pricing/pricing.model';
 import { Dialog } from '../shared/dialog';
 import { formatMoney } from './estimate.model';
-
-const PLURAL_UNITS: Unit[] = ['POINT', 'BAG', 'CAN', 'ROLL', 'BAR', 'BOX', 'PACKAGE'];
-
-/** "2 sacos", "1,32 sacos", mas "1 saco" e "3 m²". */
-export function unitLabel(unit: Unit, value?: number | null): string {
-  const symbol = UNIT_SYMBOLS[unit];
-  return value != null && value !== 1 && PLURAL_UNITS.includes(unit) ? `${symbol}s` : symbol;
-}
 
 /** Um serviço do orçamento ligado ao catálogo, com tudo o que entrou na conta. */
 export interface MemoryItem {

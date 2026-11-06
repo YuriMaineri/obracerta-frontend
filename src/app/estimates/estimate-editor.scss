@@ -66,6 +66,18 @@ textarea.auto { min-height: 36px; field-sizing: content; resize: none; }
 }
 
 .lines-footer { display: flex; align-items: center; gap: 16px; }
+.material-actions { display: flex; flex-wrap: wrap; gap: 4px; }
+.bullet.from-services { color: var(--color-accent-800); font-weight: 700; }
+.materials-outdated {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  padding: 10px 12px;
+  background: var(--color-accent-100);
+  font-size: 13px;
+}
 .total { margin-left: auto; font-size: 14px; }
 
 .money {

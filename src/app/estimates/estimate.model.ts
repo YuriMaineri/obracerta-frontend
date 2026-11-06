@@ -1,5 +1,6 @@
+import { UNIT_SYMBOLS, formatQuantity, unitLabel } from '../catalog/catalog.model';
 import { Page } from '../customers/customer.model';
-import type { Difficulty } from '../pricing/pricing.model';
+import { type Difficulty, type PricingSettings, type ShoppingItem, withMarkup } from '../pricing/pricing.model';
 
 export type EstimateStatus = 'DRAFT' | 'SENT' | 'APPROVED' | 'REJECTED';
 export type MaterialSupply = 'ITEMIZED' | 'ESTIMATED' | 'BY_RECEIPT' | 'CUSTOMER_SUPPLIED';
@@ -42,10 +43,12 @@ export interface ServiceLine {
   suggestedPrice?: number | null;
 }
 
+/** materialId preenchido = linha trazida da lista de compra dos serviços; nulo = digitada à mão. */
 export interface MaterialLine {
   description: string;
   quantity: number | null;
   totalPrice: number | null;
+  materialId?: number | null;
 }
 
 export interface PriceLine {
@@ -132,4 +135,34 @@ export function formatLeadTime(min: number | null, max: number | null): string {
 
 export function sumMaterials(lines: MaterialLine[]): number {
   return lines.reduce((total, line) => total + (line.totalPrice ?? 0), 0);
+}
+
+/**
+ * Lista de compra dos serviços como linhas de "Material a ser usado": a quantidade é a da compra (embalagens
+ * fechadas) e o preço é o da compra com custo indireto e margem. Sem preço quando withPrice é falso.
+ */
+export function materialLinesFrom(shopping: ShoppingItem[], settings: PricingSettings, withPrice: boolean): MaterialLine[] {
+  return shopping.map((s) => {
+    const quantity = s.packages ?? Math.ceil(Number((s.bought * 100).toFixed(6))) / 100;
+    const amount = s.packageName && s.packageSize
+      ? `${formatQuantity(quantity)} ${quantity === 1 ? s.packageName : plural(s.packageName)} de ${formatQuantity(s.packageSize)} ${UNIT_SYMBOLS[s.unit]}`
+      : `${formatQuantity(quantity)} ${unitLabel(s.unit, quantity)}`;
+    return {
+      description: `${s.material} — ${amount}`,
+      quantity,
+      totalPrice: withPrice && s.purchaseCost != null ? withMarkup(settings, s.purchaseCost) : null,
+      materialId: s.materialId,
+    };
+  });
+}
+
+/** Plural da primeira palavra da embalagem: galão → galões, balde → baldes, barril → barris. */
+function plural(name: string): string {
+  const [first, ...rest] = name.split(' ');
+  let word = first;
+  if (/ão$/.test(word)) word = word.replace(/ão$/, 'ões');
+  else if (/[aeiou]$/i.test(word)) word += 's';
+  else if (/[rzs]$/i.test(word)) word += 'es';
+  else if (/l$/i.test(word)) word = word.replace(/l$/i, 'is');
+  return [word, ...rest].join(' ');
 }

@@ -162,6 +162,14 @@ export function formatQuantity(value: number | null | undefined): string {
   return value == null ? '—' : decimal.format(value);
 }
 
+const PLURAL_UNITS: Unit[] = ['POINT', 'BAG', 'CAN', 'ROLL', 'BAR', 'BOX', 'PACKAGE'];
+
+/** "2 sacos", "1,32 sacos", mas "1 saco" e "3 m²". */
+export function unitLabel(unit: Unit, value?: number | null): string {
+  const symbol = UNIT_SYMBOLS[unit];
+  return value != null && value !== 1 && PLURAL_UNITS.includes(unit) ? `${symbol}s` : symbol;
+}
+
 /** "galão de 3,6 L"; nulo quando o insumo não tem embalagem. */
 export function packageLabel(m: { unit: Unit; packageName: string | null; packageSize: number | null }): string | null {
   return m.packageName && m.packageSize ? `${m.packageName} de ${formatQuantity(m.packageSize)} ${UNIT_SYMBOLS[m.unit]}` : null;

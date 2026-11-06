@@ -113,6 +113,13 @@
           </div>
           <p class="muted hint">{{ supplyHint() }}</p>
 
+          @if (materialsOutdated()) {
+            <div class="materials-outdated" role="status">
+              <span>Os serviços mudaram depois que você trouxe os materiais.</span>
+              <button type="button" class="btn btn-secondary" (click)="bringMaterials()">Atualizar materiais</button>
+            </div>
+          }
+
           @if (form.controls.materialSupply.value === 'ESTIMATED') {
             <div class="field narrow">
               <label for="e-est">Valor aproximado do material (R$)</label>
@@ -126,7 +133,8 @@
             }
             @for (g of materials.controls; track g; let i = $index) {
               <div class="line material" [formGroupName]="i">
-                <span class="bullet">•</span>
+                <span class="bullet" [class.from-services]="g.value.materialId != null"
+                      [attr.title]="g.value.materialId != null ? 'Trazido dos serviços' : null">•</span>
                 <input formControlName="description" placeholder="Ex.: 4 luminárias 24w 6500k" />
                 <input type="number" min="0" step="any" formControlName="quantity" placeholder="—" />
                 <input type="number" min="0" step="0.01" formControlName="totalPrice" placeholder="—" />
@@ -136,7 +144,15 @@
               </div>
             }
             <div class="lines-footer">
-              <button type="button" class="btn btn-ghost add" (click)="addMaterial(); focusLast('.line.material input[formcontrolname=description]')"><app-icon name="plus" [size]="14" />Adicionar material</button>
+              <div class="material-actions">
+                <button type="button" class="btn btn-ghost add" (click)="addMaterial(); focusLast('.line.material input[formcontrolname=description]')"><app-icon name="plus" [size]="14" />Adicionar material</button>
+                @if (catalogMaterials().length) {
+                  <button type="button" class="btn btn-ghost add" (click)="bringMaterials()"
+                          title="Insumos dos serviços ligados ao catálogo, somados e em embalagens fechadas">
+                    {{ form.controls.materialSupply.value === 'ESTIMATED' ? 'Calcular pelos serviços' : hasCatalogMaterials() ? 'Atualizar pelos serviços' : 'Trazer dos serviços' }}
+                  </button>
+                }
+              </div>
               @if (form.controls.materialSupply.value === 'ITEMIZED' && materialTotal() > 0) {
                 <span class="total">Valor total de material <strong class="numeric">{{ formatMoney(materialTotal()) }}</strong></span>
               }

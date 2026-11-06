@@ -23,6 +23,7 @@ import {
   materialUse,
   shoppingList,
   totalQuote,
+  withMarkup,
 } from '../pricing/pricing.model';
 import { PricingApi } from '../pricing/pricing.service';
 import {
@@ -30,10 +31,12 @@ import {
   EstimateRequest,
   EstimateStatus,
   MATERIAL_SUPPLY_OPTIONS,
+  MaterialLine,
   MaterialSupply,
   STATUS_LABELS,
   formatLeadTime,
   formatMoney,
+  materialLinesFrom,
   sumMaterials,
 } from './estimate.model';
 import { CalculationMemory, MemoryItem } from './calculation-memory';
@@ -199,6 +202,32 @@ export class EstimateEditor implements OnInit {
     return { items, shopping: shoppingList(items.flatMap((i) => i.materials)), quote, settings };
   });
 
+  /** O que "Trazer dos serviços" coloca em "Material a ser usado"; com preço só quando o material é cobrado. */
+  protected readonly catalogMaterials = computed(() => {
+    const memory = this.memory();
+    if (!memory) return [];
+    return materialLinesFrom(memory.shopping, memory.settings, chargesMaterial(this.values().materialSupply as MaterialSupply));
+  });
+
+  protected readonly hasCatalogMaterials = computed(() =>
+    ((this.values().materials ?? []) as MaterialLine[]).some((m) => m.materialId != null),
+  );
+
+  /** Os serviços mudaram depois de trazer os materiais: outro insumo, outra quantidade ou o preço passou a ser cobrado ou não. */
+  protected readonly materialsOutdated = computed(() => {
+    if (this.values().materialSupply === 'ESTIMATED') return false;
+    const current = ((this.values().materials ?? []) as MaterialLine[]).filter((m) => m.materialId != null);
+    if (!current.length) return false;
+    const suggested = new Map(this.catalogMaterials().map((l) => [l.materialId, l]));
+    return (
+      current.length !== suggested.size ||
+      current.some((m) => {
+        const s = suggested.get(m.materialId);
+        return !s || s.quantity !== m.quantity || (s.totalPrice == null) !== (m.totalPrice == null);
+      })
+    );
+  });
+
   protected readonly materialTotal = computed(() => {
     const v = this.values();
     return sumMaterials(((v.materials ?? []) as { totalPrice: number | null }[]) as never);
@@ -291,11 +320,23 @@ export class EstimateEditor implements OnInit {
     return line ? formatMoney(line.price) : '—';
   }
 
-  /** Preenche o primeiro valor com o sugerido; no material detalhado, desconta o que já está na lista. */
+  /**
+   * Preenche o primeiro valor com o sugerido; no material detalhado, desconta o que já está na lista. Material trazido
+   * dos serviços desconta só o consumo: a sobra de embalagem fica no material, não sai da mão de obra.
+   */
   protected useSuggested(): void {
-    const { quote, itemized } = this.pricing();
-    if (!quote) return;
-    const amount = Math.max(0, Math.round((quote.total - itemized) * 100) / 100);
+    const { quote, settings } = this.pricing();
+    if (!quote || !settings) return;
+    let listed = 0;
+    if (this.form.controls.materialSupply.value === 'ITEMIZED') {
+      const lines = this.materials.getRawValue() as MaterialLine[];
+      const fromServices = new Set(lines.map((m) => m.materialId).filter((id) => id != null));
+      const consumption = (this.memory()?.shopping ?? []).filter((s) => fromServices.has(s.materialId) && s.cost != null);
+      listed =
+        consumption.reduce((sum, s) => sum + withMarkup(settings, s.cost!), 0) +
+        sumMaterials(lines.filter((m) => m.materialId == null));
+    }
+    const amount = Math.max(0, Math.round((quote.total - listed) * 100) / 100);
     const target = this.priceLines.controls.find((g) => !g.value.alternative);
     if (target) {
       target.patchValue({ amount, description: target.value.description?.trim() || 'Valor da mão de obra e material' });
@@ -305,14 +346,48 @@ export class EstimateEditor implements OnInit {
     this.form.markAsDirty();
   }
 
-  protected addMaterial(value: { description: string; quantity: number | null; totalPrice: number | null } = { description: '', quantity: null, totalPrice: null }): void {
-    this.materials.push(
+  protected addMaterial(value: MaterialLine = { description: '', quantity: null, totalPrice: null }, index = this.materials.length): void {
+    this.materials.insert(
+      index,
       this.fb.group({
         description: [value.description, Validators.maxLength(200)],
         quantity: this.fb.control<number | null>(value.quantity, Validators.min(0)),
         totalPrice: this.fb.control<number | null>(value.totalPrice, Validators.min(0)),
+        materialId: this.fb.control<number | null>(value.materialId ?? null),
       }),
     );
+    this.form.markAsDirty();
+  }
+
+  /**
+   * Traz a lista de compra dos serviços para "Material a ser usado". Refaz só as linhas que vieram dos serviços;
+   * as digitadas ficam como estão. No material estimado, preenche o valor aproximado.
+   */
+  protected bringMaterials(): void {
+    const lines = this.catalogMaterials();
+    if (this.form.controls.materialSupply.value === 'ESTIMATED') {
+      const total = lines.reduce((sum, l) => sum + (l.totalPrice ?? 0), 0);
+      this.form.controls.estimatedMaterialCost.setValue(Math.round(total * 100) / 100);
+      this.form.markAsDirty();
+      return;
+    }
+    const pending = new Map(lines.map((l) => [l.materialId, l]));
+    for (let i = this.materials.length - 1; i >= 0; i--) {
+      const id = this.materials.at(i).value.materialId;
+      if (id == null) continue;
+      const line = pending.get(id);
+      if (line) {
+        this.materials.at(i).patchValue(line);
+        pending.delete(id);
+      } else {
+        this.materials.removeAt(i);
+      }
+    }
+    let at = 0;
+    this.materials.controls.forEach((g, i) => {
+      if (g.value.materialId != null) at = i + 1;
+    });
+    pending.forEach((line) => this.addMaterial(line, at++));
     this.form.markAsDirty();
   }
 
@@ -445,7 +520,12 @@ export class EstimateEditor implements OnInit {
         quantity: s['serviceId'] != null ? s['quantity'] : null,
         difficulty: s['serviceId'] != null ? s['difficulty'] : null,
       })),
-      materials: v.materials.map((m) => ({ description: m['description'].trim(), quantity: m['quantity'], totalPrice: m['totalPrice'] })),
+      materials: v.materials.map((m) => ({
+        description: m['description'].trim(),
+        quantity: m['quantity'],
+        totalPrice: m['totalPrice'],
+        materialId: m['materialId'] ?? null,
+      })),
       priceLines: v.priceLines.map((p) => ({ description: p['description'].trim(), amount: p['amount'], alternative: !!p['alternative'] })),
       exclusions: v.exclusions.map((x) => x.trim()),
       internalNotes: v.internalNotes.map((x) => x.trim()),

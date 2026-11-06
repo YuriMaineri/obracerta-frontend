@@ -60,6 +60,11 @@ export function chargesMaterial(supply: MaterialSupply): boolean {
   return supply === 'ITEMIZED' || supply === 'ESTIMATED';
 }
 
+/** Custo com custo indireto e margem, como cada serviço entra no preço sugerido. */
+export function withMarkup(settings: PricingSettings, cost: number): number {
+  return cents(cost * (1 + settings.indirectPercent / 100) * (1 + settings.marginPercent / 100));
+}
+
 /** Mesma conta do PriceCalculator do backend. */
 export function itemQuote(
   settings: PricingSettings,
@@ -73,7 +78,7 @@ export function itemQuote(
   const laborCost = cents(days * settings.dailyRate);
   const materialCost = cents(quantity * (materialCostPerUnit ?? 0));
   const base = chargeMaterial ? laborCost + materialCost : laborCost;
-  const price = cents(base * (1 + settings.indirectPercent / 100) * (1 + settings.marginPercent / 100));
+  const price = withMarkup(settings, base);
   return { laborDays: round(days, 3), laborCost, materialCost, price };
 }
 
